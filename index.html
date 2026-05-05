@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MK Show Builder</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000000' rx='4'/><text x='50%25' y='56%25' font-family='Georgia,serif' font-size='20' font-weight='900' fill='%23C41230' text-anchor='middle' dominant-baseline='middle'>M</text></svg>" />
+  <link rel="icon" type="image/png" href="MK LOGO.png" />
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     :root{
@@ -169,7 +169,7 @@
 <!-- PASSWORD -->
 <div class="pw-screen" id="pw-screen" style="display:none;">
   <div class="pw-box">
-    <div class="pw-logo-m">M</div>
+    <img src="MK LOGO.png" alt="MK" style="height:60px;width:auto;margin-bottom:0.5rem;" />
     <div class="pw-title">MK Show Builder</div>
     <div class="pw-sub">Producer access only.</div>
     <input class="pw-input" type="password" id="pw-input" maxlength="10" placeholder="----" onkeydown="if(event.key==='Enter')checkPassword()" />
@@ -180,7 +180,7 @@
 
 <div class="topbar">
   <div class="logo">
-    <span class="logo-m">M</span>
+    <img src="MK LOGO.png" alt="MK" style="height:40px;width:auto;" />
     <span class="logo-text">MK Show</span>
     <span class="logo-divider"></span>
     <span class="logo-sub">Show Builder</span>
@@ -908,19 +908,7 @@ function renderTeamView(wm,wd){
       </div>
     </div>`);
 
-    // News hits during/after show
-    (data.newsHits||[]).filter(h=>h.time>=(data.showStart||'12:00')).forEach(h=>{
-      blocks.push(`<div class="team-block">
-        <div class="team-block-time">${fmtTime12(h.time)}</div>
-        <div class="team-block-content">
-          <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
-          <div class="team-block-detail">${fmtTime12(h.time)} - ${fmtTime12(h.endtime||addMins(h.time,30))} ET</div>
-          ${h.zoom?`<div class="team-block-link"><a href="${h.zoom}" target="_blank">${h.zoom}</a></div>`:''}
-        </div>
-      </div>`);
-    });
-
-    // In-studio — prominent block
+    // In-studio — right after show block
     if(data.instudio){
       const guestNames=[data.instudio.name1,data.instudio.name2].filter(Boolean).join(', ');
       blocks.push(`<div class="team-block" style="border-left:3px solid var(--red);padding-left:12px;background:rgba(196,18,48,0.05);border-radius:4px;">
@@ -932,6 +920,18 @@ function renderTeamView(wm,wd){
         </div>
       </div>`);
     }
+
+    // News hits during/after show
+    (data.newsHits||[]).filter(h=>h.time>=(data.showStart||'12:00')).forEach(h=>{
+      blocks.push(`<div class="team-block">
+        <div class="team-block-time">${fmtTime12(h.time)}</div>
+        <div class="team-block-content">
+          <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
+          <div class="team-block-detail">${fmtTime12(h.time)} - ${fmtTime12(h.endtime||addMins(h.time,30))} ET</div>
+          ${h.zoom?`<div class="team-block-link"><a href="${h.zoom}" target="_blank">${h.zoom}</a></div>`:''}
+        </div>
+      </div>`);
+    });
 
     // Post-tape
     if(data.posttape){
