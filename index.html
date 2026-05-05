@@ -329,7 +329,7 @@ function selectDay(day){
 function buildDayPanel(day, dt, data){
   const ds=dt?fmtDateLong(dt):day;
   const hits=data.newsHits||[];
-  const hitsHTML=hits.map((h,i)=>newsHitRowHTML(day,i+1,h.time||'',h.guest||'')).join('');
+  const hitsHTML=hits.map((h,i)=>newsHitRowHTML(day,i+1,h.time||'',h.guest||'',h.zoom||'')).join('');
 
   return `
   <div class="day-header-bar">
@@ -360,7 +360,7 @@ function buildDayPanel(day, dt, data){
       <div class="field"><label>Show start</label><input type="time" id="${day}-show-start" value="${data.showStart||'12:00'}" /></div>
       <div class="field"><label>Show end</label><input type="time" id="${day}-show-end" value="${data.showEnd||'14:00'}" /></div>
     </div>
-    <div class="field"><label>Zoom link</label><input type="url" id="${day}-zoom" placeholder="https://us02web.zoom.us/j/..." value="${data.zoom||''}" /></div>
+
   </div>
 
   <!-- PRE-TAPE -->
@@ -422,11 +422,14 @@ function buildDayPanel(day, dt, data){
   </div>`;
 }
 
-function newsHitRowHTML(day,id,time,guest){
-  return `<div class="news-hit-row" id="${day}-hit-${id}">
-    <input type="time" id="${day}-hit-time-${id}" value="${time}" placeholder="Time" />
-    <input type="text" id="${day}-hit-guest-${id}" value="${guest}" placeholder="Guest name" />
-    <button class="rm-btn" onclick="removeNewsHit('${day}',${id})">x</button>
+function newsHitRowHTML(day,id,time,guest,zoom){
+  return `<div class="news-hit-wrap" id="${day}-hit-${id}">
+    <div class="news-hit-row">
+      <input type="time" id="${day}-hit-time-${id}" value="${time||''}" placeholder="Time" />
+      <input type="text" id="${day}-hit-guest-${id}" value="${guest||''}" placeholder="Guest name" />
+      <button class="rm-btn" onclick="removeNewsHit('${day}',${id})">x</button>
+    </div>
+    <input type="url" id="${day}-hit-zoom-${id}" value="${zoom||''}" placeholder="Zoom link (optional)" style="width:100%;margin-top:5px;padding:7px 10px;font-size:12px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--muted);outline:none;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border2)'" />
   </div>`;
 }
 
@@ -434,7 +437,7 @@ function addNewsHit(day){
   const id=++newsHitCounters[day];
   const wrap=document.getElementById(day+'-hits-wrap');
   const div=document.createElement('div');
-  div.innerHTML=newsHitRowHTML(day,id,'','');
+  div.innerHTML=newsHitRowHTML(day,id,'','','');
   wrap.appendChild(div.firstElementChild);
 }
 
@@ -468,11 +471,12 @@ function getDayData(day){
   const hitsWrap=document.getElementById(day+'-hits-wrap');
   const hits=[];
   if(hitsWrap){
-    hitsWrap.querySelectorAll('.news-hit-row').forEach(row=>{
+    hitsWrap.querySelectorAll('.news-hit-wrap').forEach(row=>{
       const id=row.id.split('-').pop();
       const time=get(`${day}-hit-time-${id}`)?.value||'';
       const guest=get(`${day}-hit-guest-${id}`)?.value||'';
-      if(time||guest)hits.push({time,guest});
+      const zoom=get(`${day}-hit-zoom-${id}`)?.value||'';
+      if(time||guest)hits.push({time,guest,zoom});
     });
   }
 
@@ -482,7 +486,7 @@ function getDayData(day){
     team: get(day+'-team')?.value||'',
     showStart: get(day+'-show-start')?.value||'12:00',
     showEnd: get(day+'-show-end')?.value||'14:00',
-    zoom: get(day+'-zoom')?.value||'',
+    zoom: '',
     pretape: pretapeOn?{start:get(day+'-pretape-start')?.value||'10:00',end:get(day+'-pretape-end')?.value||'11:00',notes:get(day+'-pretape-notes')?.value||''}:null,
     posttape: posttapeOn?{start:get(day+'-posttape-start')?.value||'14:00',end:get(day+'-posttape-end')?.value||'15:00',notes:get(day+'-posttape-notes')?.value||''}:null,
     instudio: instudioOn?{count:get(day+'-instudio-count')?.value||1,notes:get(day+'-instudio-notes')?.value||''}:null,
@@ -534,7 +538,8 @@ function buildCalEvents(day,data,dateStr){
   (data.newsHits||[]).forEach(h=>{
     if(h.time&&h.guest){
       const end=addMins(h.time,30);
-      events.push({title:'News Hit: '+h.guest,start:toISO(h.time),end:toISO(end),description:'News Hit',color:'flamingo'});
+      events.push({title:'News Hit: '+h.guest,start:toISO(h.time),end:toISO(end),description:'News Hit'+(h.zoom?'
+Zoom: '+h.zoom:''),color:'flamingo'});
     }
   });
   // Post-tape
@@ -634,6 +639,7 @@ function renderTeamView(wm,wd){
         <div class="team-block-time">${fmtTime12(h.time)}</div>
         <div class="team-block-content">
           <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
+          ${h.zoom?`<div class="team-block-link"><a href="${h.zoom}" target="_blank">${h.zoom}</a></div>`:''}
         </div>
       </div>`);
     });
@@ -644,7 +650,6 @@ function renderTeamView(wm,wd){
       <div class="team-block-content">
         <div class="team-block-title"><span class="team-badge team-badge-show">Live Show</span> MK Show</div>
         <div class="team-block-detail">${fmtTime12(data.showStart||'12:00')} - ${fmtTime12(data.showEnd||'14:00')} ET</div>
-        ${data.zoom?`<div class="team-block-link"><a href="${data.zoom}" target="_blank">${data.zoom}</a></div>`:''}
         ${data.instudio?`<div class="team-block-detail" style="margin-top:4px;">${data.instudio.count} in-studio guest${data.instudio.count>1?'s':''}${data.instudio.notes?' — '+data.instudio.notes:''}</div>`:''}
       </div>
     </div>`);
@@ -655,6 +660,7 @@ function renderTeamView(wm,wd){
         <div class="team-block-time">${fmtTime12(h.time)}</div>
         <div class="team-block-content">
           <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
+          ${h.zoom?`<div class="team-block-link"><a href="${h.zoom}" target="_blank">${h.zoom}</a></div>`:''}
         </div>
       </div>`);
     });
