@@ -394,6 +394,17 @@ function buildDayTabs(){
   });
 
   if(DAYS.length>0){currentDay=DAYS[0];}
+
+  // Default Saturday and Sunday to off if no saved data
+  ['Saturday','Sunday'].forEach(day=>{
+    if(!weekData[day]||!weekData[day].showStart){
+      const tab=document.getElementById('tab-'+day);
+      if(tab&&!tab.classList.contains('has-data')){
+        tab.style.opacity='0.4';
+        tab.title='Off by default';
+      }
+    }
+  });
 }
 
 function selectDay(day){
@@ -415,11 +426,19 @@ function buildDayPanel(day, dt, data){
       <div class="day-title">${day}</div>
       <div class="day-date-sub">${ds}</div>
     </div>
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="ghost-btn ${data.dayOff?'day-off-active':''}" id="${day}-dayoff-btn" onclick="toggleDayOff('${day}',this)" style="${data.dayOff?'border-color:var(--red);color:var(--red);':''}">${data.dayOff?'Day Off ✓':'Mark as Day Off'}</button>
       <button class="ghost-btn" onclick="saveDay('${day}')">Save</button>
       <button class="primary-btn" onclick="pushDayToCalendar('${day}')">Push to Calendar</button>
     </div>
   </div>
+  <div id="${day}-dayoff-panel" style="display:${data.dayOff?'block':'none'};">
+    <div class="field-group" style="border-color:rgba(196,18,48,0.3);background:rgba(196,18,48,0.05);">
+      <div class="field-group-title" style="color:var(--red);">Day Off</div>
+      <div class="field"><label>Reason / Description (optional)</label><input type="text" id="${day}-dayoff-desc" placeholder="e.g. Holiday, no show today" value="${data.dayOffDesc||''}" /></div>
+    </div>
+  </div>
+  <div id="${day}-dayoff-content" style="display:${data.dayOff?'none':'block'};">
 
   <!-- OPS -->
   <div class="field-group">
@@ -510,6 +529,7 @@ function buildDayPanel(day, dt, data){
   <div class="field-group">
     <div class="field-group-title">Additional Notes</div>
     <div class="field"><textarea id="${day}-notes" placeholder="Any other notes for this day...">${data.notes||''}</textarea></div>
+  </div>
   </div>`;
 }
 
@@ -535,6 +555,15 @@ function addNewsHit(day){
 function removeNewsHit(day,id){
   const el=document.getElementById(`${day}-hit-${id}`);
   if(el)el.remove();
+}
+
+function toggleDayOff(day,btn){
+  const isOff=!btn.style.color.includes('red');
+  btn.style.borderColor=isOff?'var(--red)':'';
+  btn.style.color=isOff?'var(--red)':'';
+  btn.textContent=isOff?'Day Off ✓':'Mark as Day Off';
+  document.getElementById(day+'-dayoff-panel').style.display=isOff?'block':'none';
+  document.getElementById(day+'-dayoff-content').style.display=isOff?'none':'block';
 }
 
 function togglePretape(day,btn){
@@ -583,7 +612,9 @@ function getDayData(day){
     posttape: posttapeOn?{start:get(day+'-posttape-start')?.value||'14:00',end:get(day+'-posttape-end')?.value||'15:00',notes:get(day+'-posttape-notes')?.value||''}:null,
     instudio: instudioOn?{count:get(day+'-instudio-count')?.value||1,notes:get(day+'-instudio-notes')?.value||''}:null,
     newsHits: hits,
-    notes: get(day+'-notes')?.value||''
+    notes: get(day+'-notes')?.value||'',
+    dayOff: document.getElementById(day+'-dayoff-btn')?.style.color.includes('red')||false,
+    dayOffDesc: get(day+'-dayoff-desc')?.value||''
   };
 }
 
@@ -649,6 +680,14 @@ function addMins(time,mins){
 async function pushDayToCalendar(day){
   const wm=getWeekMonday('prod-week');if(!wm){toast('Set a week first.');return;}
   const data=getDayData(day);
+  if(data.dayOff){
+    // Just save, no calendar events needed
+    try{
+      await api({action:'saveMKDay',weekMonday:wm,day,data});
+      toast(day+' saved as Day Off!');
+    }catch(e){toast('Connection error.');}
+    return;
+  }
   weekData[day]=data;
   const dayIdx=DAYS.indexOf(day);
   const dt=getDateForDay(wm,dayIdx);
@@ -712,6 +751,25 @@ function renderTeamView(wm,wd){
     const dt=getDateForDay(wm,i);
     const ds=fmtDate(dt);
     const data=wd[day]||{};
+    // Skip Sat/Sun if no data saved
+    if((day==='Saturday'||day==='Sunday')&&!data.showStart&&!data.dayOff){
+      return `<div class="team-day-card" style="opacity:0.35;">
+        <div class="team-day-header">
+          <div><div class="team-day-name">${day}</div><div class="team-day-date">${ds}</div></div>
+          <span style="color:var(--muted);font-size:12px;">Off</span>
+        </div>
+      </div>`;
+    }
+    // Day off
+    if(data.dayOff){
+      return `<div class="team-day-card" style="border-color:rgba(196,18,48,0.3);">
+        <div class="team-day-header" style="background:rgba(196,18,48,0.08);">
+          <div><div class="team-day-name" style="color:var(--red);">${day}</div><div class="team-day-date">${ds}</div></div>
+          <span style="color:var(--red);font-size:12px;font-weight:700;">DAY OFF</span>
+        </div>
+        ${data.dayOffDesc?`<div class="team-day-body open"><div class="team-block"><div class="team-block-content"><div class="team-block-detail" style="color:var(--muted);">${data.dayOffDesc}</div></div></div></div>`:''}
+      </div>`;
+    }
     const blocks=[];
 
     // Ops
