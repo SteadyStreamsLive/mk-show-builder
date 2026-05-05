@@ -436,7 +436,7 @@ function selectDay(day){
 function buildDayPanel(day, dt, data){
   const ds=dt?fmtDateLong(dt):day;
   const hits=data.newsHits||[];
-  const hitsHTML=hits.map((h,i)=>newsHitRowHTML(day,i+1,h.time||'',h.guest||'',h.zoom||'')).join('');
+  const hitsHTML=hits.map((h,i)=>newsHitRowHTML(day,i+1,h.time||'',h.guest||'',h.zoom||'',h.endtime||'')).join('');
 
   return `
   <div class="day-header-bar">
@@ -552,10 +552,19 @@ function buildDayPanel(day, dt, data){
   </div>`;
 }
 
-function newsHitRowHTML(day,id,time,guest,zoom){
+function addMinsToTime(time,mins){
+  if(!time)return '';
+  const [h,m]=time.split(':').map(Number);
+  const total=h*60+m+mins;
+  return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+}
+
+function newsHitRowHTML(day,id,time,guest,zoom,endtime){
+  const defaultEnd=time?addMinsToTime(time,30):'';
   return `<div class="news-hit-wrap" id="${day}-hit-${id}">
     <div class="news-hit-row">
-      <input type="time" id="${day}-hit-time-${id}" value="${time||''}" placeholder="Time" />
+      <input type="time" id="${day}-hit-time-${id}" value="${time||''}" placeholder="Start" onchange="autoSetHitEnd('${day}',${id})" />
+      <input type="time" id="${day}-hit-end-${id}" value="${endtime||defaultEnd}" placeholder="End" />
       <input type="text" id="${day}-hit-guest-${id}" value="${guest||''}" placeholder="Guest name" />
       <button class="rm-btn" onclick="removeNewsHit('${day}',${id})">x</button>
     </div>
@@ -563,11 +572,17 @@ function newsHitRowHTML(day,id,time,guest,zoom){
   </div>`;
 }
 
+function autoSetHitEnd(day,id){
+  const startEl=document.getElementById(`${day}-hit-time-${id}`);
+  const endEl=document.getElementById(`${day}-hit-end-${id}`);
+  if(startEl&&endEl&&!endEl.value){endEl.value=addMinsToTime(startEl.value,30);}
+}
+
 function addNewsHit(day){
   const id=++newsHitCounters[day];
   const wrap=document.getElementById(day+'-hits-wrap');
   const div=document.createElement('div');
-  div.innerHTML=newsHitRowHTML(day,id,'','','');
+  div.innerHTML=newsHitRowHTML(day,id,'','','','');
   wrap.appendChild(div.firstElementChild);
 }
 
@@ -613,9 +628,10 @@ function getDayData(day){
     hitsWrap.querySelectorAll('.news-hit-wrap').forEach(row=>{
       const id=row.id.split('-').pop();
       const time=get(`${day}-hit-time-${id}`)?.value||'';
+      const endtime=get(`${day}-hit-end-${id}`)?.value||addMinsToTime(time,30);
       const guest=get(`${day}-hit-guest-${id}`)?.value||'';
       const zoom=get(`${day}-hit-zoom-${id}`)?.value||'';
-      if(time||guest)hits.push({time,guest,zoom});
+      if(time||guest)hits.push({time,endtime,guest,zoom});
     });
   }
 
@@ -695,7 +711,7 @@ function buildCalEvents(day,data,dateStr){
   // News hits
   (data.newsHits||[]).forEach(h=>{
     if(h.time&&h.guest){
-      const end=addMins(h.time,30);
+      const end=h.endtime||addMins(h.time,30);
       events.push({title:'News Hit: '+h.guest,start:toISO(h.time),end:toISO(end),description:'News Hit'+(h.zoom?' Zoom: '+h.zoom:''),color:'flamingo'});
     }
   });
@@ -833,6 +849,7 @@ function renderTeamView(wm,wd){
         <div class="team-block-time">${fmtTime12(h.time)}</div>
         <div class="team-block-content">
           <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
+          <div class="team-block-detail">${fmtTime12(h.time)} - ${fmtTime12(h.endtime||addMins(h.time,30))} ET</div>
           ${h.zoom?`<div class="team-block-link"><a href="${h.zoom}" target="_blank">${h.zoom}</a></div>`:''}
         </div>
       </div>`);
@@ -854,6 +871,7 @@ function renderTeamView(wm,wd){
         <div class="team-block-time">${fmtTime12(h.time)}</div>
         <div class="team-block-content">
           <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
+          <div class="team-block-detail">${fmtTime12(h.time)} - ${fmtTime12(h.endtime||addMins(h.time,30))} ET</div>
           ${h.zoom?`<div class="team-block-link"><a href="${h.zoom}" target="_blank">${h.zoom}</a></div>`:''}
         </div>
       </div>`);
