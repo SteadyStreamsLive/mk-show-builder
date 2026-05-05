@@ -269,10 +269,13 @@ function switchView(view,btn){
   document.getElementById('view-'+view).classList.add('active');
   btn.classList.add('active');
   if(view==='team'){
-    // Sync week date and auto-refresh
     const prodWm=getWeekMonday('prod-week');
     if(prodWm)document.getElementById('team-week').value=prodWm;
     loadTeamSchedule();
+  }
+  if(view==='producer'){
+    const wm=getWeekMonday('prod-week');
+    if(wm)loadProducerWeek();
   }
 }
 
