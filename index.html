@@ -538,8 +538,7 @@ function buildCalEvents(day,data,dateStr){
   (data.newsHits||[]).forEach(h=>{
     if(h.time&&h.guest){
       const end=addMins(h.time,30);
-      events.push({title:'News Hit: '+h.guest,start:toISO(h.time),end:toISO(end),description:'News Hit'+(h.zoom?'
-Zoom: '+h.zoom:''),color:'flamingo'});
+      events.push({title:'News Hit: '+h.guest,start:toISO(h.time),end:toISO(end),description:'News Hit'+(h.zoom?' Zoom: '+h.zoom:''),color:'flamingo'});
     }
   });
   // Post-tape
