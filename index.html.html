@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MK Show Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000000' rx='4'/><text x='50%25' y='56%25' font-family='Georgia,serif' font-size='20' font-weight='900' fill='%23C41230' text-anchor='middle' dominant-baseline='middle'>M</text></svg>" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --black:#000000;--dark:#0d0d0d;--dark2:#1a1a1a;--dark3:#242424;
+      --border:#2a2a2a;--border2:#383838;--white:#ffffff;--off-white:#e0e0e0;
+      --muted:#777777;--red:#C41230;--red-light:#e01535;--red-bg:rgba(196,18,48,0.08);
+      --red-border:rgba(196,18,48,0.3);--green:#34c759;--green-bg:rgba(52,199,89,0.1);
+      --amber:#ff9f0a;--amber-bg:rgba(255,159,10,0.1);--blue:#0a84ff;
+    }
+    body{font-family:'Barlow',sans-serif;background:var(--black);color:var(--white);min-height:100vh;}
+
+    /* TOPBAR */
+    .topbar{background:var(--dark);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;height:62px;gap:14px;position:sticky;top:0;z-index:100;}
+    .logo{display:flex;align-items:center;gap:12px;margin-right:auto;}
+    .logo-m{font-family:Georgia,serif;font-size:28px;font-weight:900;color:var(--red);line-height:1;letter-spacing:-1px;}
+    .logo-text{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.1em;text-transform:uppercase;color:var(--off-white);}
+    .logo-divider{width:1px;height:20px;background:var(--border2);}
+    .logo-sub{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0.03em;}
+    .live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(196,18,48,0.15);border:1px solid rgba(196,18,48,0.35);color:var(--red-light);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;}
+    .live-dot{width:5px;height:5px;border-radius:50%;background:var(--red-light);animation:pulse 1.5s infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+    .nav-btn{font-family:'Barlow',sans-serif;font-size:13px;font-weight:500;padding:7px 16px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.15s;}
+    .nav-btn.active{background:var(--red);color:var(--white);border-color:var(--red);font-weight:600;}
+    .nav-btn:hover:not(.active){background:var(--dark3);color:var(--white);}
+
+    /* LAYOUT */
+    .container{max-width:720px;margin:0 auto;padding:2rem 1.25rem;}
+    .view{display:none;}.view.active{display:block;}
+
+    /* HERO */
+    .hero-strip{border-left:3px solid var(--red);padding-left:14px;margin-bottom:1.75rem;}
+    .hero-strip h1{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;letter-spacing:0.04em;text-transform:uppercase;line-height:1.1;}
+    .hero-strip p{font-size:14px;color:var(--muted);margin-top:4px;line-height:1.5;}
+
+    /* SECTION */
+    .section-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:14px;margin-top:1.75rem;}
+
+    /* WEEK PICKER */
+    .week-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;}
+    .week-row label{font-size:13px;color:var(--muted);font-weight:500;}
+    .week-row input{padding:7px 10px;font-size:13px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;}
+    .week-row input:focus{border-color:var(--red);}
+
+    /* DAY TABS */
+    .day-tabs{display:flex;gap:4px;margin-bottom:1.5rem;overflow-x:auto;padding-bottom:4px;}
+    .day-tab{padding:7px 14px;border-radius:3px;border:1px solid var(--border2);background:var(--dark2);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all 0.15s;}
+    .day-tab.active{background:var(--red);color:var(--white);border-color:var(--red);}
+    .day-tab:hover:not(.active){background:var(--dark3);color:var(--white);}
+    .day-tab.has-data{border-color:rgba(196,18,48,0.4);color:var(--off-white);}
+
+    /* DAY PANEL */
+    .day-panel{display:none;}.day-panel.active{display:block;}
+    .day-header-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;}
+    .day-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;}
+    .day-date-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+    /* FIELDS */
+    .field-group{background:var(--dark);border:1px solid var(--border);border-radius:6px;padding:1rem 1.25rem;margin-bottom:10px;}
+    .field-group-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:12px;}
+    .field{margin-bottom:10px;}
+    .field:last-child{margin-bottom:0;}
+    .field label{display:block;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+    .field input,.field select,.field textarea{width:100%;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;transition:border 0.15s;}
+    .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red);}
+    .field select option{background:var(--dark2);}
+    .field textarea{resize:vertical;min-height:60px;}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+    /* NEWS HITS */
+    .news-hit-row{display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;margin-bottom:8px;}
+    .news-hit-row input{padding:8px 10px;font-size:13px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;}
+    .news-hit-row input:focus{border-color:var(--red);}
+    .rm-btn{background:none;border:1px solid var(--border2);border-radius:3px;color:var(--muted);cursor:pointer;font-size:14px;padding:6px 10px;transition:all 0.15s;font-family:'Barlow',sans-serif;}
+    .rm-btn:hover{background:rgba(196,18,48,0.1);border-color:var(--red);color:var(--red);}
+    .add-item-btn{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--border2);border-radius:3px;padding:7px 12px;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:'Barlow',sans-serif;width:100%;margin-top:4px;}
+    .add-item-btn:hover{border-color:var(--red);color:var(--red);}
+
+    /* TOGGLE */
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .toggle-label{font-size:13px;color:var(--off-white);font-weight:500;}
+    .toggle-btn{width:40px;height:22px;border-radius:11px;border:none;background:var(--border2);position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+    .toggle-btn.on{background:var(--red);}
+    .toggle-btn::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:white;top:3px;left:3px;transition:left 0.2s;}
+    .toggle-btn.on::after{left:21px;}
+    .toggle-content{display:none;margin-top:10px;}
+    .toggle-content.show{display:block;}
+
+    /* BUTTONS */
+    .primary-btn{padding:10px 20px;background:var(--red);color:var(--white);border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;}
+    .primary-btn:hover{opacity:0.88;}
+    .primary-btn:disabled{opacity:0.35;cursor:not-allowed;}
+    .ghost-btn{padding:8px 14px;background:transparent;color:var(--muted);border:1px solid var(--border2);border-radius:3px;font-size:13px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all 0.15s;}
+    .ghost-btn:hover{background:var(--dark3);color:var(--white);}
+    .action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+
+    /* TEAM VIEW */
+    .team-week-nav{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;}
+    .team-week-label{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;flex:1;}
+    .team-day-card{background:var(--dark);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden;}
+    .team-day-header{background:var(--dark2);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+    .team-day-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;}
+    .team-day-date{font-size:12px;color:var(--muted);}
+    .team-day-body{padding:14px 16px;display:none;}
+    .team-day-body.open{display:block;}
+    .team-block{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);}
+    .team-block:last-child{border-bottom:none;}
+    .team-block-time{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--red);width:80px;flex-shrink:0;padding-top:1px;}
+    .team-block-content{flex:1;}
+    .team-block-title{font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px;}
+    .team-block-detail{font-size:12px;color:var(--muted);line-height:1.5;}
+    .team-block-link a{color:var(--blue);font-size:12px;text-decoration:none;word-break:break-all;}
+    .team-block-link a:hover{text-decoration:underline;}
+    .team-empty{font-size:13px;color:var(--muted);padding:8px 0;}
+    .team-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}
+    .team-badge-show{background:rgba(196,18,48,0.15);border:1px solid rgba(196,18,48,0.3);color:var(--red-light);}
+    .team-badge-ops{background:rgba(55,55,55,0.5);border:1px solid var(--border2);color:var(--muted);}
+    .team-badge-hit{background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.25);color:var(--blue);}
+    .team-badge-tape{background:rgba(52,199,89,0.1);border:1px solid rgba(52,199,89,0.25);color:var(--green);}
+
+    /* PASSWORD */
+    .pw-screen{position:fixed;inset:0;background:var(--black);z-index:200;display:flex;align-items:center;justify-content:center;}
+    .pw-box{background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:2.5rem 2rem;width:100%;max-width:340px;text-align:center;}
+    .pw-logo-m{font-family:Georgia,serif;font-size:48px;font-weight:900;color:var(--red);line-height:1;margin-bottom:0.5rem;}
+    .pw-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+    .pw-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem;}
+    .pw-input{width:100%;padding:12px 16px;font-size:24px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.3em;text-align:center;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;margin-bottom:8px;}
+    .pw-input:focus{border-color:var(--red);}
+    .pw-input.error{border-color:var(--red);animation:shake 0.3s;}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .pw-error{font-size:12px;color:var(--red);margin-bottom:12px;min-height:16px;}
+    .pw-btn{width:100%;padding:12px;background:var(--red);color:var(--white);border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;}
+    .pw-btn:hover{opacity:0.88;}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--red);color:var(--white);padding:10px 20px;border-radius:3px;font-size:13px;font-weight:700;letter-spacing:0.04em;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:999;white-space:nowrap;text-transform:uppercase;}
+    .toast.show{opacity:1;}
+
+    @media(max-width:500px){
+      .topbar{padding:0 1rem;gap:8px;}.logo-sub,.logo-divider{display:none;}
+      .container{padding:1.25rem 1rem;}
+      .field-row{grid-template-columns:1fr;}
+      .news-hit-row{grid-template-columns:1fr 1fr auto;}
+      .day-tabs{gap:3px;}
+      .day-tab{padding:6px 10px;font-size:12px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD -->
+<div class="pw-screen" id="pw-screen" style="display:none;">
+  <div class="pw-box">
+    <div class="pw-logo-m">M</div>
+    <div class="pw-title">MK Show Builder</div>
+    <div class="pw-sub">Producer access only.</div>
+    <input class="pw-input" type="password" id="pw-input" maxlength="10" placeholder="----" onkeydown="if(event.key==='Enter')checkPassword()" />
+    <div class="pw-error" id="pw-error"></div>
+    <button class="pw-btn" onclick="checkPassword()">Enter</button>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="logo">
+    <span class="logo-m">M</span>
+    <span class="logo-text">MK Show</span>
+    <span class="logo-divider"></span>
+    <span class="logo-sub">Show Builder</span>
+  </div>
+  <span class="live-badge"><span class="live-dot"></span>Live</span>
+  <button class="nav-btn active" onclick="switchView('team',this)">Schedule</button>
+  <button class="nav-btn" id="producer-nav-btn" onclick="requestProducer(this)">Producer</button>
+</div>
+
+<div class="container">
+
+  <!-- TEAM VIEW -->
+  <div class="view active" id="view-team">
+    <div class="hero-strip">
+      <h1>Show Schedule</h1>
+      <p>MK Show — current week at a glance.</p>
+    </div>
+    <div class="week-row">
+      <label>Week of</label>
+      <input type="date" id="team-week" onchange="loadTeamSchedule()" />
+      <button class="ghost-btn" onclick="loadTeamSchedule()">Refresh</button>
+    </div>
+    <div id="team-schedule-output">
+      <div style="font-size:13px;color:var(--muted);padding:1rem 0;">Select a week and click Refresh to load the schedule.</div>
+    </div>
+  </div>
+
+  <!-- PRODUCER VIEW -->
+  <div class="view" id="view-producer">
+    <div class="hero-strip">
+      <h1>Show Builder</h1>
+      <p>Build and push the weekly MK Show schedule.</p>
+    </div>
+
+    <div class="week-row">
+      <label>Week of</label>
+      <input type="date" id="prod-week" onchange="loadProducerWeek()" />
+      <button class="ghost-btn" onclick="loadProducerWeek()">Load week</button>
+      <button class="primary-btn" onclick="pushAllToCalendar()">Push full week</button>
+    </div>
+
+    <!-- DAY TABS -->
+    <div class="day-tabs" id="day-tabs"></div>
+
+    <!-- DAY PANELS -->
+    <div id="day-panels"></div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL="https://script.google.com/a/macros/steadystreamslive.com/s/AKfycbwC4fUr-nHP9ApUwpc5tDomE8ga4Ar7WoNJuWGcNVLuRD1WOKUKX4RCihCeXklvV8Mv/exec";
+const CALENDAR_ID="c_7ed29c93b1f891779b85befdba11a1015f7d2cee1ad46c2765edfa0d81a38dc2@group.calendar.google.com";
+const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SHORT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let producerUnlocked=false, weekData={}, newsHitCounters={}, currentDay=null;
+
+function toast(msg,ms=2500){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),ms);}
+async function api(payload){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});return r.json();}
+
+function switchView(view,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  btn.classList.add('active');
+}
+
+function requestProducer(btn){
+  if(producerUnlocked){switchView('producer',btn);return;}
+  document.getElementById('pw-screen').style.display='flex';
+  document.getElementById('pw-input').value='';
+  document.getElementById('pw-error').textContent='';
+  document.getElementById('pw-input').classList.remove('error');
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+  window._pendingBtn=btn;
+}
+
+function checkPassword(){
+  const val=document.getElementById('pw-input').value;
+  if(val==='0000'){
+    producerUnlocked=true;
+    document.getElementById('pw-screen').style.display='none';
+    switchView('producer',window._pendingBtn);
+    buildDayTabs();
+  } else {
+    document.getElementById('pw-input').classList.add('error');
+    document.getElementById('pw-error').textContent='Incorrect password.';
+    document.getElementById('pw-input').value='';
+    setTimeout(()=>document.getElementById('pw-input').focus(),200);
+  }
+}
+
+function getWeekMonday(inputId){return document.getElementById(inputId).value;}
+
+function nextMonday(){
+  const d=new Date(),dow=d.getDay();
+  let nd=new Date(d);
+  if(dow===0)nd.setDate(d.getDate()+1);
+  else if(dow<=2)nd.setDate(d.getDate()-(dow-1));
+  else nd.setDate(d.getDate()+(8-dow));
+  return nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
+}
+
+function getDateForDay(weekMonday, dayIdx){
+  const d=new Date(weekMonday+'T12:00:00');
+  d.setDate(d.getDate()+dayIdx);
+  return d;
+}
+
+function fmtDate(d){return d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'});}
+function fmtDateLong(d){return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
+
+// ============================================================
+// PRODUCER — DAY TABS & PANELS
+// ============================================================
+function buildDayTabs(){
+  const wm=getWeekMonday('prod-week');
+  const tabsEl=document.getElementById('day-tabs');
+  const panelsEl=document.getElementById('day-panels');
+  tabsEl.innerHTML='';panelsEl.innerHTML='';
+
+  DAYS.forEach((day,i)=>{
+    const dt=wm?getDateForDay(wm,i):null;
+    const ds=dt?fmtDate(dt):'';
+    const hasData=weekData[day]&&Object.keys(weekData[day]).length>0;
+
+    const tab=document.createElement('div');
+    tab.className='day-tab'+(hasData?' has-data':'')+(i===0?' active':'');
+    tab.id='tab-'+day;
+    tab.textContent=DAY_SHORT[i]+(ds?' '+ds:'');
+    tab.onclick=()=>selectDay(day);
+    tabsEl.appendChild(tab);
+
+    const panel=document.createElement('div');
+    panel.className='day-panel'+(i===0?' active':'');
+    panel.id='panel-'+day;
+    panel.innerHTML=buildDayPanel(day,dt,weekData[day]||{});
+    panelsEl.appendChild(panel);
+
+    newsHitCounters[day]=0;
+    // Init existing news hits count
+    const hits=(weekData[day]||{}).newsHits||[];
+    newsHitCounters[day]=hits.length;
+  });
+
+  if(DAYS.length>0){currentDay=DAYS[0];}
+}
+
+function selectDay(day){
+  document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.day-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+day).classList.add('active');
+  document.getElementById('panel-'+day).classList.add('active');
+  currentDay=day;
+}
+
+function buildDayPanel(day, dt, data){
+  const ds=dt?fmtDateLong(dt):day;
+  const hits=data.newsHits||[];
+  const hitsHTML=hits.map((h,i)=>newsHitRowHTML(day,i+1,h.time||'',h.guest||'')).join('');
+
+  return `
+  <div class="day-header-bar">
+    <div>
+      <div class="day-title">${day}</div>
+      <div class="day-date-sub">${ds}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="ghost-btn" onclick="saveDay('${day}')">Save</button>
+      <button class="primary-btn" onclick="pushDayToCalendar('${day}')">Push to Calendar</button>
+    </div>
+  </div>
+
+  <!-- OPS -->
+  <div class="field-group">
+    <div class="field-group-title">Ops</div>
+    <div class="field-row">
+      <div class="field"><label>Ops online</label><input type="time" id="${day}-ops-on" value="${data.opsOn||'10:30'}" /></div>
+      <div class="field"><label>Ops offline</label><input type="time" id="${day}-ops-off" value="${data.opsOff||'14:30'}" /></div>
+    </div>
+    <div class="field"><label>Team (comma separated)</label><input type="text" id="${day}-team" placeholder="Jimmy PM, Matt TD, Nate Media Manager" value="${data.team||'Jimmy PM, Matt TD, Nate Media Manager'}" /></div>
+  </div>
+
+  <!-- SHOW -->
+  <div class="field-group">
+    <div class="field-group-title">Show</div>
+    <div class="field-row">
+      <div class="field"><label>Show start</label><input type="time" id="${day}-show-start" value="${data.showStart||'12:00'}" /></div>
+      <div class="field"><label>Show end</label><input type="time" id="${day}-show-end" value="${data.showEnd||'14:00'}" /></div>
+    </div>
+    <div class="field"><label>Zoom link</label><input type="url" id="${day}-zoom" placeholder="https://us02web.zoom.us/j/..." value="${data.zoom||''}" /></div>
+  </div>
+
+  <!-- PRE-TAPE -->
+  <div class="field-group">
+    <div class="field-group-title">Pre-Tape</div>
+    <div class="toggle-row">
+      <span class="toggle-label">Pre-tape scheduled</span>
+      <button class="toggle-btn ${data.pretape?'on':''}" id="${day}-pretape-toggle" onclick="togglePretape('${day}',this)"></button>
+    </div>
+    <div class="toggle-content ${data.pretape?'show':''}" id="${day}-pretape-content">
+      <div class="field-row">
+        <div class="field"><label>Pre-tape start</label><input type="time" id="${day}-pretape-start" value="${(data.pretape&&data.pretape.start)||'10:00'}" /></div>
+        <div class="field"><label>Pre-tape end</label><input type="time" id="${day}-pretape-end" value="${(data.pretape&&data.pretape.end)||'11:00'}" /></div>
+      </div>
+      <div class="field"><label>Pre-tape notes</label><input type="text" id="${day}-pretape-notes" placeholder="e.g. Interview with guest name" value="${(data.pretape&&data.pretape.notes)||''}" /></div>
+    </div>
+  </div>
+
+  <!-- POST-TAPE -->
+  <div class="field-group">
+    <div class="field-group-title">Post-Tape</div>
+    <div class="toggle-row">
+      <span class="toggle-label">Post-tape scheduled</span>
+      <button class="toggle-btn ${data.posttape?'on':''}" id="${day}-posttape-toggle" onclick="togglePosttape('${day}',this)"></button>
+    </div>
+    <div class="toggle-content ${data.posttape?'show':''}" id="${day}-posttape-content">
+      <div class="field-row">
+        <div class="field"><label>Post-tape start</label><input type="time" id="${day}-posttape-start" value="${(data.posttape&&data.posttape.start)||'14:00'}" /></div>
+        <div class="field"><label>Post-tape end</label><input type="time" id="${day}-posttape-end" value="${(data.posttape&&data.posttape.end)||'15:00'}" /></div>
+      </div>
+      <div class="field"><label>Post-tape notes</label><input type="text" id="${day}-posttape-notes" placeholder="e.g. Edit session, review footage" value="${(data.posttape&&data.posttape.notes)||''}" /></div>
+    </div>
+  </div>
+
+  <!-- NEWS HITS -->
+  <div class="field-group">
+    <div class="field-group-title">News Hits / Guests</div>
+    <div id="${day}-hits-wrap">${hitsHTML}</div>
+    <button class="add-item-btn" onclick="addNewsHit('${day}')">+ Add news hit or guest</button>
+  </div>
+
+  <!-- IN-STUDIO -->
+  <div class="field-group">
+    <div class="field-group-title">In-Studio</div>
+    <div class="toggle-row">
+      <span class="toggle-label">In-studio guests</span>
+      <button class="toggle-btn ${data.instudio?'on':''}" id="${day}-instudio-toggle" onclick="toggleInstudio('${day}',this)"></button>
+    </div>
+    <div class="toggle-content ${data.instudio?'show':''}" id="${day}-instudio-content">
+      <div class="field"><label>Number of guests</label><input type="number" id="${day}-instudio-count" min="1" max="20" value="${(data.instudio&&data.instudio.count)||1}" style="width:80px;" /></div>
+      <div class="field"><label>Notes</label><textarea id="${day}-instudio-notes" placeholder="e.g. Allison in studio at 10am for Apple TV setup and guest mics">${(data.instudio&&data.instudio.notes)||''}</textarea></div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="field-group">
+    <div class="field-group-title">Additional Notes</div>
+    <div class="field"><textarea id="${day}-notes" placeholder="Any other notes for this day...">${data.notes||''}</textarea></div>
+  </div>`;
+}
+
+function newsHitRowHTML(day,id,time,guest){
+  return `<div class="news-hit-row" id="${day}-hit-${id}">
+    <input type="time" id="${day}-hit-time-${id}" value="${time}" placeholder="Time" />
+    <input type="text" id="${day}-hit-guest-${id}" value="${guest}" placeholder="Guest name" />
+    <button class="rm-btn" onclick="removeNewsHit('${day}',${id})">x</button>
+  </div>`;
+}
+
+function addNewsHit(day){
+  const id=++newsHitCounters[day];
+  const wrap=document.getElementById(day+'-hits-wrap');
+  const div=document.createElement('div');
+  div.innerHTML=newsHitRowHTML(day,id,'','');
+  wrap.appendChild(div.firstElementChild);
+}
+
+function removeNewsHit(day,id){
+  const el=document.getElementById(`${day}-hit-${id}`);
+  if(el)el.remove();
+}
+
+function togglePretape(day,btn){
+  btn.classList.toggle('on');
+  document.getElementById(day+'-pretape-content').classList.toggle('show',btn.classList.contains('on'));
+}
+
+function togglePosttape(day,btn){
+  btn.classList.toggle('on');
+  document.getElementById(day+'-posttape-content').classList.toggle('show',btn.classList.contains('on'));
+}
+
+function toggleInstudio(day,btn){
+  btn.classList.toggle('on');
+  document.getElementById(day+'-instudio-content').classList.toggle('show',btn.classList.contains('on'));
+}
+
+function getDayData(day){
+  const get=id=>document.getElementById(id);
+  const pretapeOn=get(day+'-pretape-toggle')?.classList.contains('on');
+  const posttapeOn=get(day+'-posttape-toggle')?.classList.contains('on');
+  const instudioOn=get(day+'-instudio-toggle')?.classList.contains('on');
+
+  // Collect news hits
+  const hitsWrap=document.getElementById(day+'-hits-wrap');
+  const hits=[];
+  if(hitsWrap){
+    hitsWrap.querySelectorAll('.news-hit-row').forEach(row=>{
+      const id=row.id.split('-').pop();
+      const time=get(`${day}-hit-time-${id}`)?.value||'';
+      const guest=get(`${day}-hit-guest-${id}`)?.value||'';
+      if(time||guest)hits.push({time,guest});
+    });
+  }
+
+  return {
+    opsOn: get(day+'-ops-on')?.value||'10:30',
+    opsOff: get(day+'-ops-off')?.value||'14:30',
+    team: get(day+'-team')?.value||'',
+    showStart: get(day+'-show-start')?.value||'12:00',
+    showEnd: get(day+'-show-end')?.value||'14:00',
+    zoom: get(day+'-zoom')?.value||'',
+    pretape: pretapeOn?{start:get(day+'-pretape-start')?.value||'10:00',end:get(day+'-pretape-end')?.value||'11:00',notes:get(day+'-pretape-notes')?.value||''}:null,
+    posttape: posttapeOn?{start:get(day+'-posttape-start')?.value||'14:00',end:get(day+'-posttape-end')?.value||'15:00',notes:get(day+'-posttape-notes')?.value||''}:null,
+    instudio: instudioOn?{count:get(day+'-instudio-count')?.value||1,notes:get(day+'-instudio-notes')?.value||''}:null,
+    newsHits: hits,
+    notes: get(day+'-notes')?.value||''
+  };
+}
+
+async function saveDay(day){
+  const wm=getWeekMonday('prod-week');if(!wm){toast('Set a week first.');return;}
+  const data=getDayData(day);
+  weekData[day]=data;
+  // Mark tab as having data
+  const tab=document.getElementById('tab-'+day);
+  if(tab)tab.classList.add('has-data');
+  try{
+    const r=await api({action:'saveMKDay',weekMonday:wm,day,data});
+    toast(r.success?'Saved!':'Error: '+r.error);
+  }catch(e){toast('Connection error.');}
+}
+
+async function loadProducerWeek(){
+  const wm=getWeekMonday('prod-week');if(!wm)return;
+  try{
+    const r=await api({action:'getMKWeek',weekMonday:wm});
+    if(r.success){weekData=r.weekData||{};}
+    buildDayTabs();
+    toast('Week loaded.',1500);
+  }catch(e){buildDayTabs();toast('Could not load — starting fresh.',2000);}
+}
+
+function fmtTime12(t){
+  if(!t)return '';
+  const [h,m]=t.split(':').map(Number);
+  const ap=h>=12?'PM':'AM',h12=h>12?h-12:(h===0?12:h);
+  return `${h12}:${String(m).padStart(2,'0')} ${ap}`;
+}
+
+function buildCalEvents(day,data,dateStr){
+  const events=[];
+  const toISO=(t)=>`${dateStr}T${t}:00`;
+  // Ops
+  events.push({title:'Ops Online',start:toISO(data.opsOn||'10:30'),end:toISO(data.showStart||'12:00'),description:`Team: ${data.team||''}`,color:'graphite'});
+  // Pre-tape
+  if(data.pretape){events.push({title:'Pre-Tape'+(data.pretape.notes?' - '+data.pretape.notes:''),start:toISO(data.pretape.start),end:toISO(data.pretape.end),description:'MK Show Pre-Tape',color:'sage'});}
+  // Show
+  events.push({title:'MK SHOW',start:toISO(data.showStart||'12:00'),end:toISO(data.showEnd||'14:00'),description:'MK Live Show'+(data.zoom?'\nZoom: '+data.zoom:''),color:'tomato'});
+  // News hits
+  (data.newsHits||[]).forEach(h=>{
+    if(h.time&&h.guest){
+      const end=addMins(h.time,30);
+      events.push({title:'News Hit: '+h.guest,start:toISO(h.time),end:toISO(end),description:'News Hit',color:'flamingo'});
+    }
+  });
+  // Post-tape
+  if(data.posttape){events.push({title:'Post-Tape'+(data.posttape.notes?' - '+data.posttape.notes:''),start:toISO(data.posttape.start),end:toISO(data.posttape.end),description:'MK Show Post-Tape',color:'banana'});}
+  // Ops offline
+  events.push({title:'Ops Offline',start:toISO(data.showEnd||'14:00'),end:toISO(data.opsOff||'14:30'),description:'Ops wrap',color:'graphite'});
+  return events;
+}
+
+function addMins(time,mins){
+  const [h,m]=time.split(':').map(Number);
+  const total=h*60+m+mins;
+  return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+}
+
+async function pushDayToCalendar(day){
+  const wm=getWeekMonday('prod-week');if(!wm){toast('Set a week first.');return;}
+  const data=getDayData(day);
+  weekData[day]=data;
+  const dayIdx=DAYS.indexOf(day);
+  const dt=getDateForDay(wm,dayIdx);
+  const dateStr=dt.toISOString().split('T')[0];
+  const events=buildCalEvents(day,data,dateStr);
+  try{
+    const r=await api({action:'pushMKDay',weekMonday:wm,day,dateStr,events});
+    if(r.success){toast(day+' pushed to calendar!');saveDay(day);}
+    else toast('Error: '+r.error);
+  }catch(e){toast('Connection error.');}
+}
+
+async function pushAllToCalendar(){
+  const wm=getWeekMonday('prod-week');if(!wm){toast('Set a week first.');return;}
+  let pushed=0;
+  for(const day of DAYS){
+    const panel=document.getElementById('panel-'+day);
+    if(!panel)continue;
+    const data=getDayData(day);
+    weekData[day]=data;
+    const dayIdx=DAYS.indexOf(day);
+    const dt=getDateForDay(wm,dayIdx);
+    const dateStr=dt.toISOString().split('T')[0];
+    const events=buildCalEvents(day,data,dateStr);
+    try{await api({action:'pushMKDay',weekMonday:wm,day,dateStr,events});pushed++;}catch(e){}
+  }
+  toast(`${pushed} days pushed to calendar!`);
+}
+
+// ============================================================
+// TEAM VIEW
+// ============================================================
+async function loadTeamSchedule(){
+  const wm=getWeekMonday('team-week');if(!wm)return;
+  const out=document.getElementById('team-schedule-output');
+  out.innerHTML='<div style="font-size:13px;color:var(--muted);padding:1rem 0;">Loading...</div>';
+  try{
+    const r=await api({action:'getMKWeek',weekMonday:wm});
+    const wd=r.success?(r.weekData||{}):{};
+    renderTeamView(wm,wd);
+  }catch(e){out.innerHTML='<div style="font-size:13px;color:var(--muted);">Connection error.</div>';}
+}
+
+function renderTeamView(wm,wd){
+  const out=document.getElementById('team-schedule-output');
+  if(!Object.keys(wd).length){
+    out.innerHTML='<div style="font-size:13px;color:var(--muted);padding:1rem 0;">No schedule built yet for this week.</div>';
+    return;
+  }
+  out.innerHTML=DAYS.map((day,i)=>{
+    const dt=getDateForDay(wm,i);
+    const ds=fmtDate(dt);
+    const data=wd[day]||{};
+    const blocks=[];
+
+    // Ops
+    blocks.push(`<div class="team-block">
+      <div class="team-block-time">${fmtTime12(data.opsOn||'10:30')}</div>
+      <div class="team-block-content">
+        <div class="team-block-title"><span class="team-badge team-badge-ops">Ops</span> Online</div>
+        <div class="team-block-detail">${data.team||'Jimmy PM, Matt TD, Nate Media Manager'}</div>
+      </div>
+    </div>`);
+
+    // Pre-tape
+    if(data.pretape){
+      blocks.push(`<div class="team-block">
+        <div class="team-block-time">${fmtTime12(data.pretape.start)}</div>
+        <div class="team-block-content">
+          <div class="team-block-title"><span class="team-badge team-badge-tape">Pre-Tape</span> ${data.pretape.notes||''}</div>
+          <div class="team-block-detail">Until ${fmtTime12(data.pretape.end)} ET</div>
+        </div>
+      </div>`);
+    }
+
+    // News hits before show
+    (data.newsHits||[]).filter(h=>h.time<(data.showStart||'12:00')).forEach(h=>{
+      blocks.push(`<div class="team-block">
+        <div class="team-block-time">${fmtTime12(h.time)}</div>
+        <div class="team-block-content">
+          <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
+        </div>
+      </div>`);
+    });
+
+    // Show
+    blocks.push(`<div class="team-block">
+      <div class="team-block-time">${fmtTime12(data.showStart||'12:00')}</div>
+      <div class="team-block-content">
+        <div class="team-block-title"><span class="team-badge team-badge-show">Live Show</span> MK Show</div>
+        <div class="team-block-detail">${fmtTime12(data.showStart||'12:00')} - ${fmtTime12(data.showEnd||'14:00')} ET</div>
+        ${data.zoom?`<div class="team-block-link"><a href="${data.zoom}" target="_blank">${data.zoom}</a></div>`:''}
+        ${data.instudio?`<div class="team-block-detail" style="margin-top:4px;">${data.instudio.count} in-studio guest${data.instudio.count>1?'s':''}${data.instudio.notes?' — '+data.instudio.notes:''}</div>`:''}
+      </div>
+    </div>`);
+
+    // News hits during/after show
+    (data.newsHits||[]).filter(h=>h.time>=(data.showStart||'12:00')).forEach(h=>{
+      blocks.push(`<div class="team-block">
+        <div class="team-block-time">${fmtTime12(h.time)}</div>
+        <div class="team-block-content">
+          <div class="team-block-title"><span class="team-badge team-badge-hit">News Hit</span> ${h.guest}</div>
+        </div>
+      </div>`);
+    });
+
+    // Post-tape
+    if(data.posttape){
+      blocks.push(`<div class="team-block">
+        <div class="team-block-time">${fmtTime12(data.posttape.start)}</div>
+        <div class="team-block-content">
+          <div class="team-block-title"><span class="team-badge team-badge-tape">Post-Tape</span> ${data.posttape.notes||''}</div>
+          <div class="team-block-detail">Until ${fmtTime12(data.posttape.end)} ET</div>
+        </div>
+      </div>`);
+    }
+
+    // Notes
+    if(data.notes){
+      blocks.push(`<div class="team-block">
+        <div class="team-block-time"></div>
+        <div class="team-block-content"><div class="team-block-detail" style="color:var(--amber);">${data.notes}</div></div>
+      </div>`);
+    }
+
+    return `<div class="team-day-card">
+      <div class="team-day-header" onclick="toggleTeamDay('${day}')">
+        <div><div class="team-day-name">${day}</div><div class="team-day-date">${ds}</div></div>
+        <span style="color:var(--muted);font-size:18px;">+</span>
+      </div>
+      <div class="team-day-body" id="team-${day}">${blocks.join('')}</div>
+    </div>`;
+  }).join('');
+
+  // Auto-open today
+  const today=new Date().getDay();
+  const todayName=DAYS[today===0?6:today-1];
+  const todayEl=document.getElementById('team-'+todayName);
+  if(todayEl)todayEl.classList.add('open');
+}
+
+function toggleTeamDay(day){
+  const el=document.getElementById('team-'+day);
+  if(el)el.classList.toggle('open');
+}
+
+// INIT
+const wm=nextMonday();
+document.getElementById('prod-week').value=wm;
+document.getElementById('team-week').value=wm;
+buildDayTabs();
+loadTeamSchedule();
+</script>
+</body>
+</html>
