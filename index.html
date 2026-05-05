@@ -268,6 +268,12 @@ function switchView(view,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   btn.classList.add('active');
+  if(view==='team'){
+    // Sync week date and auto-refresh
+    const prodWm=getWeekMonday('prod-week');
+    if(prodWm)document.getElementById('team-week').value=prodWm;
+    loadTeamSchedule();
+  }
 }
 
 function requestProducer(btn){
@@ -408,6 +414,15 @@ function buildDayTabs(){
 }
 
 function selectDay(day){
+  // Auto-save current day before switching
+  if(currentDay&&currentDay!==day){
+    const wm=getWeekMonday('prod-week');
+    if(wm){
+      const data=getDayData(currentDay);
+      weekData[currentDay]=data;
+      api({action:'saveMKDay',weekMonday:wm,day:currentDay,data}).catch(()=>{});
+    }
+  }
   document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.day-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+day).classList.add('active');
@@ -426,8 +441,9 @@ function buildDayPanel(day, dt, data){
       <div class="day-title">${day}</div>
       <div class="day-date-sub">${ds}</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="ghost-btn ${data.dayOff?'day-off-active':''}" id="${day}-dayoff-btn" onclick="toggleDayOff('${day}',this)" style="${data.dayOff?'border-color:var(--red);color:var(--red);':''}">${data.dayOff?'Day Off ✓':'Mark as Day Off'}</button>
+      <button class="ghost-btn" onclick="clearDay('${day}')" style="color:var(--muted);">Clear</button>
       <button class="ghost-btn" onclick="saveDay('${day}')">Save</button>
       <button class="primary-btn" onclick="pushDayToCalendar('${day}')">Push to Calendar</button>
     </div>
@@ -616,6 +632,22 @@ function getDayData(day){
     dayOff: document.getElementById(day+'-dayoff-btn')?.style.color.includes('red')||false,
     dayOffDesc: get(day+'-dayoff-desc')?.value||''
   };
+}
+
+async function clearDay(day){
+  if(!confirm(`Clear all data for ${day}? This cannot be undone.`))return;
+  const wm=getWeekMonday('prod-week');if(!wm)return;
+  try{
+    await api({action:'clearMKDay',weekMonday:wm,day});
+    delete weekData[day];
+    // Reset panel to defaults
+    const dt=wm?getDateForDay(wm,DAYS.indexOf(day)):new Date();
+    const panel=document.getElementById('panel-'+day);
+    if(panel){panel.innerHTML=buildDayPanel(day,dt,{});newsHitCounters[day]=0;}
+    const tab=document.getElementById('tab-'+day);
+    if(tab)tab.classList.remove('has-data');
+    toast(day+' cleared.');
+  }catch(e){toast('Connection error.');}
 }
 
 async function saveDay(day){
