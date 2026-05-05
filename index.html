@@ -139,6 +139,18 @@
     .pw-btn{width:100%;padding:12px;background:var(--red);color:var(--white);border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;}
     .pw-btn:hover{opacity:0.88;}
 
+    .ops-roster-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px;}
+    .ops-roster-box{background:var(--dark);border:1px solid var(--border);border-radius:6px;padding:12px;}
+    .ops-roster-title{font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:8px;}
+    .ops-roster-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;min-height:24px;}
+    .ops-chip{display:flex;align-items:center;gap:5px;background:var(--dark2);border:1px solid var(--border2);border-radius:99px;padding:3px 8px 3px 6px;font-size:12px;color:var(--off-white);}
+    .ops-chip-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;padding:0;transition:color 0.15s;}
+    .ops-chip-rm:hover{color:var(--red);}
+    .ops-add-row{display:flex;gap:6px;}
+    .ops-add-row input{flex:1;padding:6px 10px;font-size:12px;font-family:"Barlow",sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;}
+    .ops-add-row input:focus{border-color:var(--red);}
+    .ops-add-row button{padding:6px 10px;background:transparent;color:var(--muted);border:1px solid var(--border2);border-radius:3px;font-size:12px;cursor:pointer;font-family:"Barlow",sans-serif;transition:all 0.15s;}
+    .ops-add-row button:hover{background:var(--dark3);color:var(--white);}
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--red);color:var(--white);padding:10px 20px;border-radius:3px;font-size:13px;font-weight:700;letter-spacing:0.04em;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:999;white-space:nowrap;text-transform:uppercase;}
     .toast.show{opacity:1;}
 
@@ -210,6 +222,27 @@
       <button class="primary-btn" onclick="pushAllToCalendar()">Push full week</button>
     </div>
 
+    <!-- OPS ROSTER -->
+    <div class="section-label">Ops Roster</div>
+    <div class="ops-roster-section">
+      <div class="ops-roster-box">
+        <div class="ops-roster-title">TD</div>
+        <div class="ops-roster-chips" id="td-chips"></div>
+        <div class="ops-add-row">
+          <input type="text" id="td-input" placeholder="Add TD..." onkeydown="if(event.key==='Enter')addOps('td')" />
+          <button onclick="addOps('td')">Add</button>
+        </div>
+      </div>
+      <div class="ops-roster-box">
+        <div class="ops-roster-title">Media Manager</div>
+        <div class="ops-roster-chips" id="mm-chips"></div>
+        <div class="ops-add-row">
+          <input type="text" id="mm-input" placeholder="Add Media Manager..." onkeydown="if(event.key==='Enter')addOps('mm')" />
+          <button onclick="addOps('mm')">Add</button>
+        </div>
+      </div>
+    </div>
+
     <!-- DAY TABS -->
     <div class="day-tabs" id="day-tabs"></div>
 
@@ -225,7 +258,7 @@ const SCRIPT_URL="https://script.google.com/a/macros/steadystreamslive.com/s/AKf
 const CALENDAR_ID="c_7ed29c93b1f891779b85befdba11a1015f7d2cee1ad46c2765edfa0d81a38dc2@group.calendar.google.com";
 const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const DAY_SHORT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-let producerUnlocked=false, weekData={}, newsHitCounters={}, currentDay=null;
+let producerUnlocked=false, weekData={}, newsHitCounters={}, currentDay=null, tdRoster=['Matt'], mmRoster=['Nate','Zach'];
 
 function toast(msg,ms=2500){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),ms);}
 async function api(payload){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});return r.json();}
@@ -253,6 +286,7 @@ function checkPassword(){
     producerUnlocked=true;
     document.getElementById('pw-screen').style.display='none';
     switchView('producer',window._pendingBtn);
+    loadOpsRoster();
     buildDayTabs();
   } else {
     document.getElementById('pw-input').classList.add('error');
@@ -285,6 +319,50 @@ function fmtDateLong(d){return d.toLocaleDateString('en-US',{weekday:'long',mont
 // ============================================================
 // PRODUCER — DAY TABS & PANELS
 // ============================================================
+function renderOpsRoster(){
+  document.getElementById('td-chips').innerHTML=tdRoster.map(n=>`<div class="ops-chip"><span>${n}</span><button class="ops-chip-rm" onclick="removeOps('td','${n}')">x</button></div>`).join('');
+  document.getElementById('mm-chips').innerHTML=mmRoster.map(n=>`<div class="ops-chip"><span>${n}</span><button class="ops-chip-rm" onclick="removeOps('mm','${n}')">x</button></div>`).join('');
+  // Update all day panel dropdowns
+  DAYS.forEach(day=>{
+    const tdSel=document.getElementById(day+'-td');
+    const mmSel=document.getElementById(day+'-mm');
+    if(tdSel){const cur=tdSel.value;tdSel.innerHTML=tdRoster.map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n}</option>`).join('');}
+    if(mmSel){const cur=mmSel.value;mmSel.innerHTML=mmRoster.map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n}</option>`).join('');}
+  });
+  saveOpsRoster();
+}
+
+function addOps(role){
+  const inp=document.getElementById(role+'-input');
+  const name=inp.value.trim();
+  if(!name)return;
+  if(role==='td'&&!tdRoster.includes(name)){tdRoster.push(name);}
+  else if(role==='mm'&&!mmRoster.includes(name)){mmRoster.push(name);}
+  inp.value='';
+  renderOpsRoster();
+}
+
+function removeOps(role,name){
+  if(role==='td')tdRoster=tdRoster.filter(n=>n!==name);
+  else mmRoster=mmRoster.filter(n=>n!==name);
+  renderOpsRoster();
+}
+
+async function saveOpsRoster(){
+  try{await api({action:'saveMKOpsRoster',tdRoster,mmRoster});}catch(e){}
+}
+
+async function loadOpsRoster(){
+  try{
+    const r=await api({action:'getMKOpsRoster'});
+    if(r.success){
+      if(r.tdRoster&&r.tdRoster.length)tdRoster=r.tdRoster;
+      if(r.mmRoster&&r.mmRoster.length)mmRoster=r.mmRoster;
+      renderOpsRoster();
+    }
+  }catch(e){renderOpsRoster();}
+}
+
 function buildDayTabs(){
   const wm=getWeekMonday('prod-week');
   const tabsEl=document.getElementById('day-tabs');
@@ -350,7 +428,20 @@ function buildDayPanel(day, dt, data){
       <div class="field"><label>Ops online</label><input type="time" id="${day}-ops-on" value="${data.opsOn||'10:30'}" /></div>
       <div class="field"><label>Ops offline</label><input type="time" id="${day}-ops-off" value="${data.opsOff||'14:30'}" /></div>
     </div>
-    <div class="field"><label>Team (comma separated)</label><input type="text" id="${day}-team" placeholder="Jimmy PM, Matt TD, Nate Media Manager" value="${data.team||'Jimmy PM, Matt TD, Nate Media Manager'}" /></div>
+    <div class="field-row">
+      <div class="field">
+        <label>TD</label>
+        <select id="${day}-td">
+          ${tdRoster.map(n=>`<option value="${n}" ${(data.td||'Matt')===n?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Media Manager</label>
+        <select id="${day}-mm">
+          ${mmRoster.map(n=>`<option value="${n}" ${(data.mm||'Nate')===n?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+    </div>
   </div>
 
   <!-- SHOW -->
@@ -483,7 +574,8 @@ function getDayData(day){
   return {
     opsOn: get(day+'-ops-on')?.value||'10:30',
     opsOff: get(day+'-ops-off')?.value||'14:30',
-    team: get(day+'-team')?.value||'',
+    td: get(day+'-td')?.value||'Matt',
+    mm: get(day+'-mm')?.value||'Nate',
     showStart: get(day+'-show-start')?.value||'12:00',
     showEnd: get(day+'-show-end')?.value||'14:00',
     zoom: '',
@@ -529,7 +621,7 @@ function buildCalEvents(day,data,dateStr){
   const events=[];
   const toISO=(t)=>`${dateStr}T${t}:00`;
   // Ops
-  events.push({title:'Ops Online',start:toISO(data.opsOn||'10:30'),end:toISO(data.showStart||'12:00'),description:`Team: ${data.team||''}`,color:'graphite'});
+  events.push({title:'Ops Online',start:toISO(data.opsOn||'10:30'),end:toISO(data.showStart||'12:00'),description:`TD: ${data.td||'Matt'} | Media Manager: ${data.mm||'Nate'}`,color:'graphite'});
   // Pre-tape
   if(data.pretape){events.push({title:'Pre-Tape'+(data.pretape.notes?' - '+data.pretape.notes:''),start:toISO(data.pretape.start),end:toISO(data.pretape.end),description:'MK Show Pre-Tape',color:'sage'});}
   // Show
@@ -563,9 +655,13 @@ async function pushDayToCalendar(day){
   const dateStr=dt.toISOString().split('T')[0];
   const events=buildCalEvents(day,data,dateStr);
   try{
-    const r=await api({action:'pushMKDay',weekMonday:wm,day,dateStr,events});
-    if(r.success){toast(day+' pushed to calendar!');saveDay(day);}
-    else toast('Error: '+r.error);
+    const [calR,saveR]=await Promise.all([
+      api({action:'pushMKDay',weekMonday:wm,day,dateStr,events}),
+      api({action:'saveMKDay',weekMonday:wm,day,data})
+    ]);
+    if(calR.success&&saveR.success) toast(day+' pushed to calendar and saved!');
+    else if(calR.success) toast(day+' pushed to calendar!');
+    else toast('Error: '+calR.error);
   }catch(e){toast('Connection error.');}
 }
 
@@ -581,9 +677,15 @@ async function pushAllToCalendar(){
     const dt=getDateForDay(wm,dayIdx);
     const dateStr=dt.toISOString().split('T')[0];
     const events=buildCalEvents(day,data,dateStr);
-    try{await api({action:'pushMKDay',weekMonday:wm,day,dateStr,events});pushed++;}catch(e){}
+    try{
+      await Promise.all([
+        api({action:'pushMKDay',weekMonday:wm,day,dateStr,events}),
+        api({action:'saveMKDay',weekMonday:wm,day,data})
+      ]);
+      pushed++;
+    }catch(e){}
   }
-  toast(`${pushed} days pushed to calendar!`);
+  toast(`${pushed} days pushed to calendar and saved!`);
 }
 
 // ============================================================
