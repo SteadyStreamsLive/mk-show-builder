@@ -812,7 +812,7 @@ function renderTeamView(wm,wd){
       <div class="team-block-time">${fmtTime12(data.opsOn||'10:30')}</div>
       <div class="team-block-content">
         <div class="team-block-title"><span class="team-badge team-badge-ops">Ops</span> Online</div>
-        <div class="team-block-detail">${data.team||'Jimmy PM, Matt TD, Nate Media Manager'}</div>
+        <div class="team-block-detail">TD: ${data.td||'Matt'} | Media Manager: ${data.mm||'Nate'}</div>
       </div>
     </div>`);
 
