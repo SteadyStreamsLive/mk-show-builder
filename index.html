@@ -804,6 +804,12 @@ async function pushAllToCalendar(){
   for(const day of DAYS){
     const panel=document.getElementById('panel-'+day);
     if(!panel)continue;
+
+    // Skip Saturday and Sunday unless they have been explicitly saved with data
+    if((day==='Saturday'||day==='Sunday')&&(!weekData[day]||!weekData[day].showStart)&&!(weekData[day]&&weekData[day].dayOff)){
+      continue;
+    }
+
     const data=getDayData(day);
     weekData[day]=data;
     const dayIdx=DAYS.indexOf(day);
