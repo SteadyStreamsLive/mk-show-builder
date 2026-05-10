@@ -801,23 +801,24 @@ async function pushDayToCalendar(day){
 async function pushAllToCalendar(){
   const wm=getWeekMonday('prod-week');if(!wm){toast('Set a week first.');return;}
 
-  // First load the week from sheet so we know what was actually saved
+  // Always load from sheet first to know what was intentionally saved
   let savedData={};
   try{
     const r=await api({action:'getMKWeek',weekMonday:wm});
     if(r.success)savedData=r.weekData||{};
-  }catch(e){}
+  }catch(e){toast('Could not load week data.');return;}
+
+  // Only push days that are in the sheet (intentionally saved)
+  // For Mon-Fri always push, for Sat-Sun only if in sheet
+  const WEEKDAYS=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const WEEKEND=['Saturday','Sunday'];
 
   let pushed=0;
-  for(const day of DAYS){
+
+  // Push Mon-Fri
+  for(const day of WEEKDAYS){
     const panel=document.getElementById('panel-'+day);
     if(!panel)continue;
-
-    // Skip Saturday and Sunday unless they have an actual saved row in the sheet
-    if((day==='Saturday'||day==='Sunday')&&!savedData[day]){
-      continue;
-    }
-
     const data=getDayData(day);
     weekData[day]=data;
     const dayIdx=DAYS.indexOf(day);
@@ -832,6 +833,27 @@ async function pushAllToCalendar(){
       pushed++;
     }catch(e){}
   }
+
+  // Only push Sat/Sun if they exist in the sheet
+  for(const day of WEEKEND){
+    if(!savedData[day])continue; // not in sheet = skip
+    const panel=document.getElementById('panel-'+day);
+    if(!panel)continue;
+    const data=getDayData(day);
+    weekData[day]=data;
+    const dayIdx=DAYS.indexOf(day);
+    const dt=getDateForDay(wm,dayIdx);
+    const dateStr=dt.toISOString().split('T')[0];
+    const events=buildCalEvents(day,data,dateStr);
+    try{
+      await Promise.all([
+        api({action:'pushMKDay',weekMonday:wm,day,dateStr,events}),
+        api({action:'saveMKDay',weekMonday:wm,day,data})
+      ]);
+      pushed++;
+    }catch(e){}
+  }
+
   toast(`${pushed} days pushed to calendar and saved!`);
 }
 
