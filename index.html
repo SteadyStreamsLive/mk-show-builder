@@ -800,13 +800,21 @@ async function pushDayToCalendar(day){
 
 async function pushAllToCalendar(){
   const wm=getWeekMonday('prod-week');if(!wm){toast('Set a week first.');return;}
+
+  // First load the week from sheet so we know what was actually saved
+  let savedData={};
+  try{
+    const r=await api({action:'getMKWeek',weekMonday:wm});
+    if(r.success)savedData=r.weekData||{};
+  }catch(e){}
+
   let pushed=0;
   for(const day of DAYS){
     const panel=document.getElementById('panel-'+day);
     if(!panel)continue;
 
-    // Skip Saturday and Sunday unless they have been explicitly saved with data
-    if((day==='Saturday'||day==='Sunday')&&(!weekData[day]||!weekData[day].showStart)&&!(weekData[day]&&weekData[day].dayOff)){
+    // Skip Saturday and Sunday unless they have an actual saved row in the sheet
+    if((day==='Saturday'||day==='Sunday')&&!savedData[day]){
       continue;
     }
 
