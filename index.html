@@ -167,6 +167,19 @@
 <body>
 
 <!-- PASSWORD -->
+<!-- FULL APP PASSWORD SCREEN -->
+<div id="app-lock" style="position:fixed;inset:0;background:#000000;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:2.5rem 2rem;width:100%;max-width:340px;text-align:center;">
+    <img src="MK LOGO.png" alt="MK" style="height:60px;width:auto;margin-bottom:1rem;" />
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:white;margin-bottom:6px;">MK Show Builder</div>
+    <div style="font-size:13px;color:#777;margin-bottom:1.5rem;">Enter password to continue.</div>
+    <input type="password" id="app-pw-input" maxlength="20" placeholder="Password" onkeydown="if(event.key==='Enter')checkAppPassword()"
+      style="width:100%;padding:12px 16px;font-size:16px;font-family:'Barlow',sans-serif;text-align:center;background:#1a1a1a;border:1px solid #3a3a3a;border-radius:4px;color:white;outline:none;margin-bottom:8px;" />
+    <div id="app-pw-error" style="font-size:12px;color:#C41230;margin-bottom:12px;min-height:16px;"></div>
+    <button onclick="checkAppPassword()" style="width:100%;padding:12px;background:#C41230;color:white;border:none;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Enter</button>
+  </div>
+</div>
+
 <div class="pw-screen" id="pw-screen" style="display:none;">
   <div class="pw-box">
     <img src="MK LOGO.png" alt="MK" style="height:60px;width:auto;margin-bottom:0.5rem;" />
@@ -255,6 +268,21 @@
 
 <script>
 const SCRIPT_URL="https://script.google.com/a/macros/steadystreamslive.com/s/AKfycbxmg6tG3n6SDXpOpZMpI5wpysqVEiVjLpvAF2wcWy5tKYcc2gv5Rb-KX74DUU-e6oRWdA/exec";
+
+function checkAppPassword(){
+  const val=document.getElementById('app-pw-input').value;
+  if(val==='@Dmin2026!'){
+    document.getElementById('app-lock').style.display='none';
+  } else {
+    document.getElementById('app-pw-error').textContent='Incorrect password.';
+    document.getElementById('app-pw-input').value='';
+    document.getElementById('app-pw-input').style.borderColor='#C41230';
+    setTimeout(()=>{
+      document.getElementById('app-pw-input').style.borderColor='#3a3a3a';
+    },1500);
+    setTimeout(()=>document.getElementById('app-pw-input').focus(),100);
+  }
+}
 const CALENDAR_ID="c_7ed29c93b1f891779b85befdba11a1015f7d2cee1ad46c2765edfa0d81a38dc2@group.calendar.google.com";
 const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const DAY_SHORT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
