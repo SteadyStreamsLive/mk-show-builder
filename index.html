@@ -257,63 +257,42 @@
       <p>Pre-show system checks for ops team.</p>
     </div>
 
-    <!-- SUB TABS -->
-    <div style="display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0;">
-      <button class="cl-sub-tab active" id="cl-tab-check" onclick="switchCLTab('check')" style="padding:8px 16px;background:transparent;border:none;border-bottom:2px solid var(--red);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--white);cursor:pointer;">Checklist</button>
-      <button class="cl-sub-tab" id="cl-tab-edit" onclick="switchCLTab('edit')" style="padding:8px 16px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Edit</button>
+    <!-- ROLE TABS -->
+    <div style="display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0;flex-wrap:wrap;">
+      <button id="cl-role-td" onclick="switchCLRole('td')" style="padding:8px 16px;background:transparent;border:none;border-bottom:2px solid var(--red);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--white);cursor:pointer;">TD</button>
+      <button id="cl-role-mm" onclick="switchCLRole('mm')" style="padding:8px 16px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Media Manager</button>
+      <button id="cl-role-utility" onclick="switchCLRole('utility')" style="padding:8px 16px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Utility</button>
+      <div style="flex:1;"></div>
+      <button id="cl-mode-check" onclick="switchCLMode('check')" style="padding:6px 12px;background:var(--red);border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--white);cursor:pointer;margin-bottom:4px;">Checklist</button>
+      <button id="cl-mode-edit" onclick="switchCLMode('edit')" style="padding:6px 12px;background:transparent;border:1px solid var(--border2);border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-bottom:4px;">Edit</button>
     </div>
 
-    <!-- CHECKLIST TAB -->
-    <div id="cl-sub-check">
-      <button class="ghost-btn" onclick="resetAllChecklists()" style="margin-bottom:1.5rem;">Reset All</button>
-      <div class="checklist-section">
-        <div class="checklist-section-title">TD <button class="checklist-reset-btn" onclick="resetChecklist('td')">Reset</button></div>
-        <div id="cl-td"></div>
+    <!-- CHECKLIST MODE -->
+    <div id="cl-mode-check-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <span id="cl-role-title" style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--red);">TD</span>
+        <div style="display:flex;gap:8px;">
+          <button class="checklist-reset-btn" onclick="resetCurrentChecklist()">Reset</button>
+          <button class="checklist-reset-btn" onclick="resetAllChecklists()">Reset All</button>
+        </div>
       </div>
       <div class="checklist-section">
-        <div class="checklist-section-title">Media Manager <button class="checklist-reset-btn" onclick="resetChecklist('mm')">Reset</button></div>
-        <div id="cl-mm"></div>
-      </div>
-      <div class="checklist-section">
-        <div class="checklist-section-title">Utility <button class="checklist-reset-btn" onclick="resetChecklist('utility')">Reset</button></div>
-        <div id="cl-utility"></div>
+        <div id="cl-active-list"></div>
       </div>
     </div>
 
-    <!-- EDIT TAB -->
-    <div id="cl-sub-edit" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1.5rem;">
-        <div class="ops-roster-box">
-          <div class="ops-roster-title">TD</div>
-          <div id="edit-cl-td"></div>
-          <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
-            <input type="text" id="cl-td-section-input" placeholder="Section (optional)" style="padding:5px 8px;font-size:11px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--muted);outline:none;width:100%;" />
-            <div class="ops-add-row">
-              <input type="text" id="cl-td-input" placeholder="Add item..." onkeydown="if(event.key==='Enter')addChecklistItem('td')" />
-              <button onclick="addChecklistItem('td')">Add</button>
-            </div>
-          </div>
-        </div>
-        <div class="ops-roster-box">
-          <div class="ops-roster-title">Media Manager</div>
-          <div id="edit-cl-mm"></div>
-          <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
-            <input type="text" id="cl-mm-section-input" placeholder="Section (optional)" style="padding:5px 8px;font-size:11px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--muted);outline:none;width:100%;" />
-            <div class="ops-add-row">
-              <input type="text" id="cl-mm-input" placeholder="Add item..." onkeydown="if(event.key==='Enter')addChecklistItem('mm')" />
-              <button onclick="addChecklistItem('mm')">Add</button>
-            </div>
-          </div>
-        </div>
-        <div class="ops-roster-box">
-          <div class="ops-roster-title">Utility</div>
-          <div id="edit-cl-utility"></div>
-          <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
-            <input type="text" id="cl-utility-section-input" placeholder="Section (optional)" style="padding:5px 8px;font-size:11px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--muted);outline:none;width:100%;" />
-            <div class="ops-add-row">
-              <input type="text" id="cl-utility-input" placeholder="Add item..." onkeydown="if(event.key==='Enter')addChecklistItem('utility')" />
-              <button onclick="addChecklistItem('utility')">Add</button>
-            </div>
+    <!-- EDIT MODE -->
+    <div id="cl-mode-edit-panel" style="display:none;">
+      <div style="margin-bottom:8px;">
+        <span id="cl-edit-role-title" style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--red);">TD</span>
+      </div>
+      <div class="checklist-section">
+        <div id="cl-edit-list"></div>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+          <input type="text" id="cl-section-input" placeholder="Section (optional)" style="padding:7px 10px;font-size:12px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;width:100%;" />
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="cl-item-input" placeholder="Add item..." style="flex:1;padding:7px 10px;font-size:13px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;" onkeydown="if(event.key==='Enter')addChecklistItemCurrent()" />
+            <button class="ghost-btn" onclick="addChecklistItemCurrent()">Add</button>
           </div>
         </div>
       </div>
@@ -1143,14 +1122,100 @@ function toggleTeamDay(day){
 let checklistsUnlocked = false;
 let checklists = { td: [], mm: [], utility: [] };
 
-function switchCLTab(tab) {
-  document.getElementById('cl-sub-check').style.display = tab === 'check' ? 'block' : 'none';
-  document.getElementById('cl-sub-edit').style.display = tab === 'edit' ? 'block' : 'none';
-  document.getElementById('cl-tab-check').style.borderBottomColor = tab === 'check' ? 'var(--red)' : 'transparent';
-  document.getElementById('cl-tab-check').style.color = tab === 'check' ? 'var(--white)' : 'var(--muted)';
-  document.getElementById('cl-tab-edit').style.borderBottomColor = tab === 'edit' ? 'var(--red)' : 'transparent';
-  document.getElementById('cl-tab-edit').style.color = tab === 'edit' ? 'var(--white)' : 'var(--muted)';
-  if (tab === 'edit') renderEditChecklists();
+let currentCLRole = 'td';
+let currentCLMode = 'check';
+const CL_ROLE_LABELS = { td: 'TD', mm: 'Media Manager', utility: 'Utility' };
+
+function switchCLRole(role) {
+  currentCLRole = role;
+  ['td','mm','utility'].forEach(r => {
+    const btn = document.getElementById('cl-role-' + r);
+    if (btn) {
+      btn.style.borderBottomColor = r === role ? 'var(--red)' : 'transparent';
+      btn.style.color = r === role ? 'var(--white)' : 'var(--muted)';
+    }
+  });
+  renderCurrentChecklist();
+}
+
+function switchCLMode(mode) {
+  currentCLMode = mode;
+  document.getElementById('cl-mode-check-panel').style.display = mode === 'check' ? 'block' : 'none';
+  document.getElementById('cl-mode-edit-panel').style.display = mode === 'edit' ? 'block' : 'none';
+  document.getElementById('cl-mode-check').style.background = mode === 'check' ? 'var(--red)' : 'transparent';
+  document.getElementById('cl-mode-check').style.color = mode === 'check' ? 'var(--white)' : 'var(--muted)';
+  document.getElementById('cl-mode-check').style.border = mode === 'check' ? 'none' : '1px solid var(--border2)';
+  document.getElementById('cl-mode-edit').style.background = mode === 'edit' ? 'var(--red)' : 'transparent';
+  document.getElementById('cl-mode-edit').style.color = mode === 'edit' ? 'var(--white)' : 'var(--muted)';
+  document.getElementById('cl-mode-edit').style.border = mode === 'edit' ? 'none' : '1px solid var(--border2)';
+  renderCurrentChecklist();
+}
+
+function renderCurrentChecklist() {
+  const role = currentCLRole;
+  const label = CL_ROLE_LABELS[role];
+
+  if (currentCLMode === 'check') {
+    document.getElementById('cl-role-title').textContent = label;
+    const wrap = document.getElementById('cl-active-list');
+    const items = checklists[role] || [];
+    if (!items.length) {
+      wrap.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0;">No items yet. Switch to Edit to add items.</div>';
+      return;
+    }
+    let html = '';
+    let currentSection = null;
+    items.forEach((entry, i) => {
+      const section = entry.section || '';
+      const item = entry.item || entry;
+      if (section && section !== currentSection) {
+        currentSection = section;
+        html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin:12px 0 6px;padding-top:8px;border-top:1px solid var(--border);">${section}</div>`;
+      }
+      html += `<div class="checklist-item" id="cl-item-${role}-${i}">
+        <input type="checkbox" id="cl-cb-${role}-${i}" onchange="toggleCheck('${role}',${i},this)" />
+        <label for="cl-cb-${role}-${i}">${item}</label>
+      </div>`;
+    });
+    wrap.innerHTML = html;
+  } else {
+    document.getElementById('cl-edit-role-title').textContent = label;
+    const wrap = document.getElementById('cl-edit-list');
+    const items = checklists[role] || [];
+    wrap.innerHTML = items.map((entry, i) => {
+      const item = entry.item || entry;
+      const section = entry.section || '';
+      return `<div class="edit-checklist-item">
+        <span style="font-size:12px;">${section ? '<span style="color:var(--red);font-size:10px;display:block;">' + section + '</span>' : ''}${item}</span>
+        <button class="edit-checklist-rm" onclick="removeChecklistItemCurrent(${i})">x</button>
+      </div>`;
+    }).join('') || '<div style="font-size:13px;color:var(--muted);padding:8px 0;">No items yet.</div>';
+  }
+}
+
+async function addChecklistItemCurrent() {
+  const inp = document.getElementById('cl-item-input');
+  const secInp = document.getElementById('cl-section-input');
+  const val = inp.value.trim();
+  const sec = secInp ? secInp.value.trim() : '';
+  if (!val) return;
+  if (!checklists[currentCLRole]) checklists[currentCLRole] = [];
+  checklists[currentCLRole].push({ section: sec, item: val });
+  inp.value = '';
+  renderCurrentChecklist();
+  await saveChecklists();
+  toast('Saved!', 1500);
+}
+
+async function removeChecklistItemCurrent(idx) {
+  checklists[currentCLRole].splice(idx, 1);
+  renderCurrentChecklist();
+  await saveChecklists();
+  toast('Removed.', 1500);
+}
+
+function resetCurrentChecklist() {
+  resetChecklist(currentCLRole);
 }
 
 function requestChecklists(btn) {
@@ -1211,17 +1276,18 @@ function toggleCheck(role, idx, cb) {
 }
 
 function resetChecklist(role) {
-  const wrap = document.getElementById('cl-' + role);
-  if (!wrap) return;
-  wrap.querySelectorAll('input[type=checkbox]').forEach(cb => {
-    cb.checked = false;
-    const item = document.getElementById(cb.id.replace('cb','item'));
+  // Reset checkboxes for this role
+  for (let i = 0; i < (checklists[role]||[]).length; i++) {
+    const cb = document.getElementById(`cl-cb-${role}-${i}`);
+    const item = document.getElementById(`cl-item-${role}-${i}`);
+    if (cb) cb.checked = false;
     if (item) item.classList.remove('checked');
-  });
+  }
 }
 
 function resetAllChecklists() {
   ['td','mm','utility'].forEach(role => resetChecklist(role));
+  toast('All reset!', 1500);
 }
 
 function renderEditChecklists() {
@@ -1267,9 +1333,8 @@ async function loadChecklists() {
     if (r.success && r.checklists) {
       checklists = r.checklists;
     }
-    renderChecklists();
-    renderEditChecklists();
-  } catch(e) { renderChecklists(); renderEditChecklists(); }
+    renderCurrentChecklist();
+  } catch(e) { renderCurrentChecklist(); }
 }
 
 // INIT
