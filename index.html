@@ -154,6 +154,22 @@
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--red);color:var(--white);padding:10px 20px;border-radius:3px;font-size:13px;font-weight:700;letter-spacing:0.04em;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:999;white-space:nowrap;text-transform:uppercase;}
     .toast.show{opacity:1;}
 
+    /* CHECKLISTS */
+    .checklist-pw-screen{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;display:flex;align-items:center;justify-content:center;}
+    .checklist-section{background:var(--dark);border:1px solid var(--border);border-radius:6px;padding:1.25rem;margin-bottom:16px;}
+    .checklist-section-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+    .checklist-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+    .checklist-item:last-child{border-bottom:none;}
+    .checklist-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--red);cursor:pointer;flex-shrink:0;}
+    .checklist-item label{font-size:13px;color:var(--off-white);cursor:pointer;flex:1;line-height:1.4;}
+    .checklist-item.checked label{text-decoration:line-through;color:var(--muted);}
+    .checklist-reset-btn{padding:4px 10px;background:transparent;border:1px solid var(--border2);border-radius:3px;color:var(--muted);font-size:11px;font-family:'Barlow',sans-serif;cursor:pointer;transition:all 0.15s;}
+    .checklist-reset-btn:hover{border-color:var(--red);color:var(--red);}
+    .edit-checklist-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+    .edit-checklist-item:last-child{border-bottom:none;}
+    .edit-checklist-item span{flex:1;font-size:13px;color:var(--off-white);}
+    .edit-checklist-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:3px;transition:all 0.15s;}
+    .edit-checklist-rm:hover{color:var(--red);}
     @media(max-width:500px){
       .topbar{padding:0 1rem;gap:8px;}.logo-sub,.logo-divider{display:none;}
       .container{padding:1.25rem 1rem;}
@@ -191,6 +207,18 @@
   </div>
 </div>
 
+<!-- CHECKLIST PASSWORD -->
+<div class="checklist-pw-screen" id="cl-pw-screen" style="display:none;">
+  <div class="pw-box">
+    <img src="MK LOGO.png" alt="MK" style="height:50px;width:auto;margin-bottom:0.5rem;" />
+    <div class="pw-title">Checklists</div>
+    <div class="pw-sub">Enter password to access.</div>
+    <input class="pw-input" type="password" id="cl-pw-input" maxlength="10" placeholder="----" onkeydown="if(event.key==='Enter')checkCLPassword()" />
+    <div class="pw-error" id="cl-pw-error"></div>
+    <button class="pw-btn" onclick="checkCLPassword()">Enter</button>
+  </div>
+</div>
+
 <div class="topbar">
   <div class="logo">
     <img src="MK LOGO.png" alt="MK" style="height:40px;width:auto;" />
@@ -201,6 +229,7 @@
   <span class="live-badge"><span class="live-dot"></span>Live</span>
   <button class="nav-btn active" onclick="switchView('team',this)">Schedule</button>
   <button class="nav-btn" id="producer-nav-btn" onclick="requestProducer(this)">Producer</button>
+  <button class="nav-btn" onclick="requestChecklists(this)">Checklists</button>
 </div>
 
 <div class="container">
@@ -218,6 +247,28 @@
     </div>
     <div id="team-schedule-output">
       <div style="font-size:13px;color:var(--muted);padding:1rem 0;">Select a week and click Refresh to load the schedule.</div>
+    </div>
+  </div>
+
+  <!-- CHECKLISTS VIEW -->
+  <div class="view" id="view-checklists">
+    <div class="hero-strip">
+      <h1>Checklists</h1>
+      <p>Pre-show system checks for ops team.</p>
+    </div>
+    <button class="ghost-btn" onclick="resetAllChecklists()" style="margin-bottom:1.5rem;">Reset All</button>
+
+    <div class="checklist-section">
+      <div class="checklist-section-title">TD <button class="checklist-reset-btn" onclick="resetChecklist('td')">Reset</button></div>
+      <div id="cl-td"></div>
+    </div>
+    <div class="checklist-section">
+      <div class="checklist-section-title">Media Manager <button class="checklist-reset-btn" onclick="resetChecklist('mm')">Reset</button></div>
+      <div id="cl-mm"></div>
+    </div>
+    <div class="checklist-section">
+      <div class="checklist-section-title">Utility <button class="checklist-reset-btn" onclick="resetChecklist('utility')">Reset</button></div>
+      <div id="cl-utility"></div>
     </div>
   </div>
 
@@ -252,6 +303,35 @@
         <div class="ops-add-row">
           <input type="text" id="mm-input" placeholder="Add Media Manager..." onkeydown="if(event.key==='Enter')addOps('mm')" />
           <button onclick="addOps('mm')">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT CHECKLISTS -->
+    <div class="section-label">Edit Checklists</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1.5rem;">
+      <div class="ops-roster-box">
+        <div class="ops-roster-title">TD</div>
+        <div id="edit-cl-td"></div>
+        <div class="ops-add-row" style="margin-top:8px;">
+          <input type="text" id="cl-td-input" placeholder="Add item..." onkeydown="if(event.key==='Enter')addChecklistItem('td')" />
+          <button onclick="addChecklistItem('td')">Add</button>
+        </div>
+      </div>
+      <div class="ops-roster-box">
+        <div class="ops-roster-title">Media Manager</div>
+        <div id="edit-cl-mm"></div>
+        <div class="ops-add-row" style="margin-top:8px;">
+          <input type="text" id="cl-mm-input" placeholder="Add item..." onkeydown="if(event.key==='Enter')addChecklistItem('mm')" />
+          <button onclick="addChecklistItem('mm')">Add</button>
+        </div>
+      </div>
+      <div class="ops-roster-box">
+        <div class="ops-roster-title">Utility</div>
+        <div id="edit-cl-utility"></div>
+        <div class="ops-add-row" style="margin-top:8px;">
+          <input type="text" id="cl-utility-input" placeholder="Add item..." onkeydown="if(event.key==='Enter')addChecklistItem('utility')" />
+          <button onclick="addChecklistItem('utility')">Add</button>
         </div>
       </div>
     </div>
@@ -324,6 +404,7 @@ function checkPassword(){
     document.getElementById('pw-screen').style.display='none';
     switchView('producer',window._pendingBtn);
     loadOpsRoster();
+    loadChecklists();
     buildDayTabs();
   } else {
     document.getElementById('pw-input').classList.add('error');
@@ -1035,6 +1116,117 @@ function renderTeamView(wm,wd){
 function toggleTeamDay(day){
   const el=document.getElementById('team-'+day);
   if(el)el.classList.toggle('open');
+}
+
+// ============================================================
+// CHECKLISTS
+// ============================================================
+let checklistsUnlocked = false;
+let checklists = { td: [], mm: [], utility: [] };
+
+function requestChecklists(btn) {
+  if (checklistsUnlocked) { switchView('checklists', btn); renderChecklists(); return; }
+  document.getElementById('cl-pw-screen').style.display = 'flex';
+  document.getElementById('cl-pw-input').value = '';
+  document.getElementById('cl-pw-error').textContent = '';
+  document.getElementById('cl-pw-input').classList.remove('error');
+  setTimeout(() => document.getElementById('cl-pw-input').focus(), 100);
+  window._pendingCLBtn = btn;
+}
+
+function checkCLPassword() {
+  const val = document.getElementById('cl-pw-input').value;
+  if (val === '0000') {
+    checklistsUnlocked = true;
+    document.getElementById('cl-pw-screen').style.display = 'none';
+    switchView('checklists', window._pendingCLBtn);
+    loadChecklists();
+  } else {
+    document.getElementById('cl-pw-input').classList.add('error');
+    document.getElementById('cl-pw-error').textContent = 'Incorrect password.';
+    document.getElementById('cl-pw-input').value = '';
+    setTimeout(() => document.getElementById('cl-pw-input').focus(), 200);
+  }
+}
+
+function renderChecklists() {
+  ['td','mm','utility'].forEach(role => {
+    const wrap = document.getElementById('cl-' + role);
+    if (!wrap) return;
+    if (!checklists[role].length) {
+      wrap.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0;">No items yet. Add in Producer view.</div>';
+      return;
+    }
+    wrap.innerHTML = checklists[role].map((item, i) =>
+      `<div class="checklist-item" id="cl-item-${role}-${i}">
+        <input type="checkbox" id="cl-cb-${role}-${i}" onchange="toggleCheck('${role}',${i},this)" />
+        <label for="cl-cb-${role}-${i}">${item}</label>
+      </div>`
+    ).join('');
+  });
+}
+
+function toggleCheck(role, idx, cb) {
+  const item = document.getElementById(`cl-item-${role}-${idx}`);
+  if (item) item.classList.toggle('checked', cb.checked);
+}
+
+function resetChecklist(role) {
+  const wrap = document.getElementById('cl-' + role);
+  if (!wrap) return;
+  wrap.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.checked = false;
+    const item = document.getElementById(cb.id.replace('cb','item'));
+    if (item) item.classList.remove('checked');
+  });
+}
+
+function resetAllChecklists() {
+  ['td','mm','utility'].forEach(role => resetChecklist(role));
+}
+
+function renderEditChecklists() {
+  ['td','mm','utility'].forEach(role => {
+    const wrap = document.getElementById('edit-cl-' + role);
+    if (!wrap) return;
+    wrap.innerHTML = checklists[role].map((item, i) =>
+      `<div class="edit-checklist-item">
+        <span>${item}</span>
+        <button class="edit-checklist-rm" onclick="removeChecklistItem('${role}',${i})">x</button>
+      </div>`
+    ).join('');
+  });
+}
+
+async function addChecklistItem(role) {
+  const inp = document.getElementById('cl-' + role + '-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  checklists[role].push(val);
+  inp.value = '';
+  renderEditChecklists();
+  await saveChecklists();
+}
+
+async function removeChecklistItem(role, idx) {
+  checklists[role].splice(idx, 1);
+  renderEditChecklists();
+  await saveChecklists();
+}
+
+async function saveChecklists() {
+  try { await api({ action: 'saveMKChecklists', checklists }); } catch(e) {}
+}
+
+async function loadChecklists() {
+  try {
+    const r = await api({ action: 'getMKChecklists' });
+    if (r.success && r.checklists) {
+      checklists = r.checklists;
+    }
+    renderChecklists();
+    renderEditChecklists();
+  } catch(e) { renderChecklists(); renderEditChecklists(); }
 }
 
 // INIT
