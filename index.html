@@ -289,9 +289,16 @@
       <div class="checklist-section">
         <div id="cl-edit-list"></div>
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
-          <input type="text" id="cl-section-input" placeholder="Section (optional)" style="padding:7px 10px;font-size:12px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;width:100%;" />
           <div style="display:flex;gap:6px;">
-            <input type="text" id="cl-item-input" placeholder="Add item..." style="flex:1;padding:7px 10px;font-size:13px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;" onkeydown="if(event.key==='Enter')addChecklistItemCurrent()" />
+            <select id="cl-type-input" style="padding:7px 10px;font-size:12px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;">
+              <option value="step">Step (1, 2, 3...)</option>
+              <option value="substep">Sub-step (a, b, c...)</option>
+              <option value="section-header">Section Header</option>
+            </select>
+          </div>
+          <input type="text" id="cl-section-input" placeholder="Section label (optional, groups steps)" style="padding:7px 10px;font-size:12px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;width:100%;" />
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="cl-item-input" placeholder="Add item text..." style="flex:1;padding:7px 10px;font-size:13px;font-family:'Barlow',sans-serif;background:var(--dark2);border:1px solid var(--border2);border-radius:3px;color:var(--white);outline:none;" onkeydown="if(event.key==='Enter')addChecklistItemCurrent()" />
             <button class="ghost-btn" onclick="addChecklistItemCurrent()">Add</button>
           </div>
         </div>
@@ -1166,32 +1173,64 @@ function renderCurrentChecklist() {
     let html = '';
     let currentSection = null;
     let stepNum = 0;
+    let subNum = 0;
     items.forEach((entry, i) => {
       const section = entry.section || '';
       const item = entry.item || entry;
-      if (section !== currentSection) {
+      const type = entry.type || 'step'; // 'section-header', 'step', 'substep'
+
+      if (type === 'section-header' || (section && section !== currentSection && type === 'step')) {
         currentSection = section;
         stepNum = 0;
-        if (section) {
-          html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.04em;color:var(--off-white);margin:16px 0 6px;padding:8px 0 6px;border-bottom:1px solid var(--border2);">${section}</div>`;
-        }
+        subNum = 0;
+        const label = type === 'section-header' ? item : section;
+        html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.04em;color:var(--off-white);margin:16px 0 4px;padding:8px 0 6px;border-bottom:1px solid var(--border2);">${label}</div>`;
+        if (type === 'section-header') return;
       }
-      stepNum++;
-      html += `<div class="checklist-item" id="cl-item-${role}-${i}">
-        <input type="checkbox" id="cl-cb-${role}-${i}" onchange="toggleCheck('${role}',${i},this)" />
-        <label for="cl-cb-${role}-${i}" style="display:flex;gap:8px;"><span style="color:var(--muted);font-size:12px;flex-shrink:0;min-width:22px;">${stepNum})</span><span>${item}</span></label>
-      </div>`;
+
+      if (type === 'step') {
+        stepNum++;
+        subNum = 0;
+        html += `<div style="padding:6px 0 2px;font-size:13px;color:var(--off-white);font-weight:600;display:flex;gap:8px;margin-left:4px;">
+          <span style="color:var(--muted);flex-shrink:0;min-width:22px;">${stepNum})</span>
+          <span>${item}</span>
+        </div>`;
+      } else if (type === 'substep') {
+        subNum++;
+        const letter = String.fromCharCode(96 + subNum);
+        html += `<div class="checklist-item" id="cl-item-${role}-${i}" style="margin-left:28px;">
+          <input type="checkbox" id="cl-cb-${role}-${i}" onchange="toggleCheck('${role}',${i},this)" />
+          <label for="cl-cb-${role}-${i}" style="display:flex;gap:8px;">
+            <span style="color:var(--muted);font-size:12px;flex-shrink:0;min-width:20px;">${letter})</span>
+            <span>${item}</span>
+          </label>
+        </div>`;
+      } else {
+        // plain item (no type set, legacy)
+        stepNum++;
+        html += `<div class="checklist-item" id="cl-item-${role}-${i}">
+          <input type="checkbox" id="cl-cb-${role}-${i}" onchange="toggleCheck('${role}',${i},this)" />
+          <label for="cl-cb-${role}-${i}" style="display:flex;gap:8px;">
+            <span style="color:var(--muted);font-size:12px;flex-shrink:0;min-width:22px;">${stepNum})</span>
+            <span>${item}</span>
+          </label>
+        </div>`;
+      }
     });
     wrap.innerHTML = html;
   } else {
     document.getElementById('cl-edit-role-title').textContent = label;
     const wrap = document.getElementById('cl-edit-list');
     const items = checklists[role] || [];
+    const typeLabels = {'section-header':'HEADER','step':'STEP','substep':'SUB'};
+    const typeColors = {'section-header':'var(--amber)','step':'var(--blue)','substep':'var(--muted)'};
     wrap.innerHTML = items.map((entry, i) => {
       const item = entry.item || entry;
+      const type = entry.type || 'step';
       const section = entry.section || '';
       return `<div class="edit-checklist-item">
-        <span style="font-size:12px;">${section ? '<span style="color:var(--red);font-size:10px;display:block;">' + section + '</span>' : ''}${item}</span>
+        <span style="font-size:11px;color:${typeColors[type]||'var(--muted)'};font-weight:700;min-width:44px;flex-shrink:0;">${typeLabels[type]||'STEP'}</span>
+        <span style="font-size:12px;flex:1;">${section?'<span style="color:var(--muted);font-size:10px;">['+section+'] </span>':''}${item}</span>
         <button class="edit-checklist-rm" onclick="removeChecklistItemCurrent(${i})">x</button>
       </div>`;
     }).join('') || '<div style="font-size:13px;color:var(--muted);padding:8px 0;">No items yet.</div>';
@@ -1201,11 +1240,13 @@ function renderCurrentChecklist() {
 async function addChecklistItemCurrent() {
   const inp = document.getElementById('cl-item-input');
   const secInp = document.getElementById('cl-section-input');
+  const typeInp = document.getElementById('cl-type-input');
   const val = inp.value.trim();
   const sec = secInp ? secInp.value.trim() : '';
+  const type = typeInp ? typeInp.value : 'step';
   if (!val) return;
   if (!checklists[currentCLRole]) checklists[currentCLRole] = [];
-  checklists[currentCLRole].push({ section: sec, item: val });
+  checklists[currentCLRole].push({ section: sec, item: val, type });
   inp.value = '';
   renderCurrentChecklist();
   await saveChecklists();
