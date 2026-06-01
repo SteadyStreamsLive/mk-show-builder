@@ -1165,16 +1165,21 @@ function renderCurrentChecklist() {
     }
     let html = '';
     let currentSection = null;
+    let stepNum = 0;
     items.forEach((entry, i) => {
       const section = entry.section || '';
       const item = entry.item || entry;
-      if (section && section !== currentSection) {
+      if (section !== currentSection) {
         currentSection = section;
-        html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin:12px 0 6px;padding-top:8px;border-top:1px solid var(--border);">${section}</div>`;
+        stepNum = 0;
+        if (section) {
+          html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.04em;color:var(--off-white);margin:16px 0 6px;padding:8px 0 6px;border-bottom:1px solid var(--border2);">${section}</div>`;
+        }
       }
+      stepNum++;
       html += `<div class="checklist-item" id="cl-item-${role}-${i}">
         <input type="checkbox" id="cl-cb-${role}-${i}" onchange="toggleCheck('${role}',${i},this)" />
-        <label for="cl-cb-${role}-${i}">${item}</label>
+        <label for="cl-cb-${role}-${i}" style="display:flex;gap:8px;"><span style="color:var(--muted);font-size:12px;flex-shrink:0;min-width:22px;">${stepNum})</span><span>${item}</span></label>
       </div>`;
     });
     wrap.innerHTML = html;
